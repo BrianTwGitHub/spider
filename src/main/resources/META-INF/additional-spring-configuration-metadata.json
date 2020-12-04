@@ -1,0 +1,19 @@
+{
+  "properties": [
+    {
+      "name": "demo.exclude.company.names.keyword",
+      "type": "java.lang.String",
+      "description": "Description for demo.exclude.company.names.keyword."
+    },
+    {
+      "name": "demo.exclude.job.names.keyword",
+      "type": "java.lang.String",
+      "description": "Description for demo.exclude.job.names.keyword."
+    },
+    {
+      "name": "demo.exclude.area.names.keyword",
+      "type": "java.lang.String",
+      "description": "Description for demo.exclude.area.names.keyword."
+    }
+  ]
+}
