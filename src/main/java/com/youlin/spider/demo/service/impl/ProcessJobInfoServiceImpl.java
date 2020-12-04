@@ -201,6 +201,7 @@ public class ProcessJobInfoServiceImpl implements ProcessJobInfoService {
             } else {
                 job = new Job();
                 job.setJobName(jobName);
+                job.setJobUrl(href);
                 job.setStatus(JobStatus.ACTIVATED);
 
                 Optional<Area> areaOptional = areaList.stream().filter(area -> area.getAreaName().equals(jobArea)).findFirst();
