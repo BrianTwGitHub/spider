@@ -28,19 +28,19 @@ public class JobDaoImpl implements JobDao {
         BooleanExpression conditions = Expressions.asBoolean(true).isTrue();
 
         if (StringUtils.hasLength(jobName)) {
-            conditions.and(qJob.jobName.likeIgnoreCase(jobName));
+            conditions = conditions.and(qJob.jobName.likeIgnoreCase(jobName));
         }
 
         if (jobAreaId != null) {
-            conditions.and(qJob.area.id.eq(jobAreaId));
+            conditions = conditions.and(qJob.area.id.eq(jobAreaId));
         }
 
         if (StringUtils.hasLength(jobContent)) {
-            conditions.and(qJob.jobContent.likeIgnoreCase(jobContent));
+            conditions = conditions.and(qJob.jobContent.likeIgnoreCase(jobContent));
         }
 
         if (jobStatus != null) {
-            conditions.and(qJob.status.ne(JobStatus.DELETE));
+            conditions = conditions.and(qJob.status.ne(JobStatus.DELETE));
         }
 
         return jobRepository.findAll(conditions, pageable);

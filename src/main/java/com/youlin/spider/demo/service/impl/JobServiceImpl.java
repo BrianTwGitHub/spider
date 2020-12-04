@@ -1,11 +1,15 @@
 package com.youlin.spider.demo.service.impl;
 
+import com.youlin.spider.demo.entity.Area;
 import com.youlin.spider.demo.entity.Job;
+import com.youlin.spider.demo.entity.QArea;
 import com.youlin.spider.demo.enums.JobStatus;
+import com.youlin.spider.demo.repository.AreaRepository;
 import com.youlin.spider.demo.repository.JobDao;
 import com.youlin.spider.demo.repository.JobRepository;
 import com.youlin.spider.demo.service.JobService;
 import com.youlin.spider.demo.service.ProcessJobInfoService;
+import com.youlin.spider.demo.vo.JobArea;
 import com.youlin.spider.demo.vo.JobInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +20,10 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,6 +35,8 @@ public class JobServiceImpl implements JobService {
     private final JobDao jobDao;
 
     private final JobRepository jobRepository;
+
+    private final AreaRepository areaRepository;
 
     private final ProcessJobInfoService processJobInfoService;
 
@@ -43,6 +52,7 @@ public class JobServiceImpl implements JobService {
                         .jobLocation(job.getJobLocation())
                         .jobSalary(job.getJobSalary())
                         .jobContent(job.getJobContent())
+                        .jobUrl(job.getJobUrl())
                         .build()).collect(Collectors.toList());
         return new PageImpl<>(jobInfoList, pageable, jobByJobNameLike.getTotalElements());
     }
@@ -61,5 +71,20 @@ public class JobServiceImpl implements JobService {
         jobInfo.setJobArea(job.getArea().getAreaName());
         jobInfo.setJobUrl(job.getJobUrl());
         return processJobInfoService.getJobInfo(job, jobInfo, job.getJobUrl(), new ChromeDriver(new ChromeOptions().setHeadless(false)), true);
+    }
+
+    /**
+     * @return
+     */
+    @Override
+    public List<JobArea> getJobAreaList() {
+        QArea condition = QArea.area;
+        Iterable<Area> iterable = areaRepository.findAll(condition.status.ne(JobStatus.DELETE));
+        List<Area> result = new ArrayList<>();
+        iterable.forEach(result::add);
+        if (CollectionUtils.isEmpty(result)) {
+            return Collections.emptyList();
+        }
+        return result.stream().map(area -> new JobArea(area.getId(), area.getAreaName())).collect(Collectors.toList());
     }
 }
