@@ -33,6 +33,8 @@ spring:
       max-lifetime: 1800000
       minimum-idle: 40
       maximum-pool-size: 300
+  schedule:
+    enabled: true
 
 demo:
   exclude:

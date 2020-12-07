@@ -22,7 +22,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -54,8 +53,8 @@ public class JobServiceImpl implements JobService {
                     .map(job -> JobInfo.builder()
                             .jobId(job.getId())
                             .jobName(job.getJobName())
-                            .jobCompany(companyList.stream().filter(company -> company.getId().equals(job.getCompany().getId())).findFirst().orElseThrow().getCompanyName())
-                            .jobArea(areaList.stream().filter(area -> area.getId().equals(job.getArea().getId())).findFirst().orElseThrow().getAreaName())
+                            .jobCompany(companyList.stream().filter(company -> company.getId().equals(job.getCompany().getId())).findFirst().orElseThrow(() -> new IllegalArgumentException("can not found company, id:" + job.getCompany().getId())).getCompanyName())
+                            .jobArea(areaList.stream().filter(area -> area.getId().equals(job.getArea().getId())).findFirst().orElseThrow(() -> new IllegalArgumentException("can not found area, id: " + job.getArea().getId())).getAreaName())
                             .jobLocation(job.getJobLocation())
                             .jobSalary(job.getJobSalary())
                             .jobContent(job.getJobContent())
@@ -73,7 +72,7 @@ public class JobServiceImpl implements JobService {
     @Override
     @Transactional
     public JobInfo reload(Integer jobId) {
-        Job job = jobRepository.findById(jobId).orElseThrow(() -> new RuntimeException("Job not found, id:" + jobId));
+        Job job = jobRepository.findById(jobId).orElseThrow(() -> new IllegalArgumentException("Job not found, id:" + jobId));
         JobInfo jobInfo = new JobInfo();
         jobInfo.setJobName(job.getJobName());
         jobInfo.setJobCompany(job.getCompany().getCompanyName());
@@ -89,11 +88,12 @@ public class JobServiceImpl implements JobService {
     public List<JobArea> getJobAreaList() {
         QArea condition = QArea.area;
         Iterable<Area> iterable = areaRepository.findAll(condition.status.ne(JobStatus.DELETE));
+        if (!iterable.iterator().hasNext()) {
+            return Collections.emptyList();
+
+        }
         List<Area> result = new ArrayList<>();
         iterable.forEach(result::add);
-        if (CollectionUtils.isEmpty(result)) {
-            return Collections.emptyList();
-        }
         return result.stream().map(area -> new JobArea(area.getId(), area.getAreaName())).collect(Collectors.toList());
     }
 }
