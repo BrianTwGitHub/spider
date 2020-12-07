@@ -24,9 +24,10 @@ public class JobController {
     @ApiOperation("取得Job列表")
     public ResponseEntity<Page<JobInfo>> getJobs(@RequestParam(required = false) String jobName,
                                                  @RequestParam(required = false) Integer jobAreaId,
+                                                 @RequestParam(required = false) String jobCompanyName,
                                                  @RequestParam(required = false) String jobContent,
                                                  @PageableDefault Pageable pageable) {
-        return ResponseEntity.ok().body(jobService.getJobs(jobName, jobAreaId, jobContent, pageable));
+        return ResponseEntity.ok().body(jobService.getJobs(jobName, jobAreaId, jobCompanyName, jobContent, pageable));
     }
 
     @GetMapping("/area/list")

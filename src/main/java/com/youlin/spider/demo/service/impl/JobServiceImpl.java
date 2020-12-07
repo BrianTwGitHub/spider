@@ -45,8 +45,8 @@ public class JobServiceImpl implements JobService {
     private final ProcessJobInfoService processJobInfoService;
 
     @Override
-    public Page<JobInfo> getJobs(String jobName, Integer jobAreaId, String jobContent, Pageable pageable) {
-        Page<Job> jobByJobNameLike = jobDao.findJobByCondition(jobName, jobAreaId, jobContent, JobStatus.DELETE, pageable);
+    public Page<JobInfo> getJobs(String jobName, Integer jobAreaId, String companyName, String jobContent, Pageable pageable) {
+        Page<Job> jobByJobNameLike = jobDao.findJobByCondition(jobName, jobAreaId, companyName, jobContent, JobStatus.DELETE, pageable);
         if (!jobByJobNameLike.isEmpty()) {
             List<Area> areaList = areaRepository.findAll();
             List<Company> companyList = companyRepository.findAll();

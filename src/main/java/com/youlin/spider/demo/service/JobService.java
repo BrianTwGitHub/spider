@@ -16,11 +16,12 @@ public interface JobService {
      *
      * @param jobName
      * @param jobAreaId
+     * @param companyName
      * @param jobContent
      * @param pageable
      * @return
      */
-    public Page<JobInfo> getJobs(String jobName, Integer jobAreaId, String jobContent, Pageable pageable);
+    public Page<JobInfo> getJobs(String jobName, Integer jobAreaId, String companyName, String jobContent, Pageable pageable);
 
     /**
      * @param jobId
@@ -28,5 +29,8 @@ public interface JobService {
      */
     public JobInfo reload(Integer jobId);
 
+    /**
+     * @return
+     */
     public List<JobArea> getJobAreaList();
 }

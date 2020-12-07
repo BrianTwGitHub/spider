@@ -22,21 +22,25 @@ public class JobDaoImpl implements JobDao {
     private final JobRepository jobRepository;
 
     @Override
-    public Page<Job> findJobByCondition(String jobName, Integer jobAreaId, String jobContent, JobStatus jobStatus, Pageable pageable) {
+    public Page<Job> findJobByCondition(String jobName, Integer jobAreaId, String companyName, String jobContent, JobStatus jobStatus, Pageable pageable) {
         QJob qJob = QJob.job;
 
         BooleanExpression conditions = Expressions.asBoolean(true).isTrue();
 
         if (StringUtils.hasLength(jobName)) {
-            conditions = conditions.and(qJob.jobName.likeIgnoreCase(jobName));
+            conditions = conditions.and(qJob.jobName.containsIgnoreCase(jobName));
         }
 
         if (jobAreaId != null) {
             conditions = conditions.and(qJob.area.id.eq(jobAreaId));
         }
 
+        if (StringUtils.hasLength(companyName)) {
+            conditions = conditions.and(qJob.company.companyName.containsIgnoreCase(companyName));
+        }
+
         if (StringUtils.hasLength(jobContent)) {
-            conditions = conditions.and(qJob.jobContent.likeIgnoreCase(jobContent));
+            conditions = conditions.and(qJob.jobContent.containsIgnoreCase(jobContent));
         }
 
         if (jobStatus != null) {

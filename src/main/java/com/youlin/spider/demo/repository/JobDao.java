@@ -6,5 +6,5 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface JobDao {
-    Page<Job> findJobByCondition(String jobName, Integer jobAreaId, String jobContent, JobStatus jobStatus, Pageable pageable);
+    Page<Job> findJobByCondition(String jobName, Integer jobAreaId, String companyName, String jobContent, JobStatus jobStatus, Pageable pageable);
 }
