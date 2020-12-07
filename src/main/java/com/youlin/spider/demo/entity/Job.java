@@ -38,11 +38,11 @@ public class Job implements Serializable {
     @Column(name = "job_url")
     private String jobUrl;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "job_company_id")
     private Company company;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "job_area_id", nullable = false)
     private Area area;
 

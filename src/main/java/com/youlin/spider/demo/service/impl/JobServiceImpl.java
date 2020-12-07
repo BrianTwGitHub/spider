@@ -1,10 +1,12 @@
 package com.youlin.spider.demo.service.impl;
 
 import com.youlin.spider.demo.entity.Area;
+import com.youlin.spider.demo.entity.Company;
 import com.youlin.spider.demo.entity.Job;
 import com.youlin.spider.demo.entity.QArea;
 import com.youlin.spider.demo.enums.JobStatus;
 import com.youlin.spider.demo.repository.AreaRepository;
+import com.youlin.spider.demo.repository.CompanyRepository;
 import com.youlin.spider.demo.repository.JobDao;
 import com.youlin.spider.demo.repository.JobRepository;
 import com.youlin.spider.demo.service.JobService;
@@ -38,23 +40,30 @@ public class JobServiceImpl implements JobService {
 
     private final AreaRepository areaRepository;
 
+    private final CompanyRepository companyRepository;
+
     private final ProcessJobInfoService processJobInfoService;
 
     @Override
     public Page<JobInfo> getJobs(String jobName, Integer jobAreaId, String jobContent, Pageable pageable) {
         Page<Job> jobByJobNameLike = jobDao.findJobByCondition(jobName, jobAreaId, jobContent, JobStatus.DELETE, pageable);
-        List<JobInfo> jobInfoList = jobByJobNameLike.getContent().stream()
-                .map(job -> JobInfo.builder()
-                        .jobId(job.getId())
-                        .jobName(job.getJobName())
-                        .jobCompany(job.getCompany().getCompanyName())
-                        .jobArea(job.getArea().getAreaName())
-                        .jobLocation(job.getJobLocation())
-                        .jobSalary(job.getJobSalary())
-                        .jobContent(job.getJobContent())
-                        .jobUrl(job.getJobUrl())
-                        .build()).collect(Collectors.toList());
-        return new PageImpl<>(jobInfoList, pageable, jobByJobNameLike.getTotalElements());
+        if (!jobByJobNameLike.isEmpty()) {
+            List<Area> areaList = areaRepository.findAll();
+            List<Company> companyList = companyRepository.findAll();
+            List<JobInfo> jobInfoList = jobByJobNameLike.getContent().stream()
+                    .map(job -> JobInfo.builder()
+                            .jobId(job.getId())
+                            .jobName(job.getJobName())
+                            .jobCompany(companyList.stream().filter(company -> company.getId().equals(job.getCompany().getId())).findFirst().orElseThrow().getCompanyName())
+                            .jobArea(areaList.stream().filter(area -> area.getId().equals(job.getArea().getId())).findFirst().orElseThrow().getAreaName())
+                            .jobLocation(job.getJobLocation())
+                            .jobSalary(job.getJobSalary())
+                            .jobContent(job.getJobContent())
+                            .jobUrl(job.getJobUrl())
+                            .build()).collect(Collectors.toList());
+            return new PageImpl<>(jobInfoList, pageable, jobByJobNameLike.getTotalElements());
+        }
+        return new PageImpl<>(Collections.emptyList(), pageable, 0);
     }
 
     /**
