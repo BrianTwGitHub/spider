@@ -193,7 +193,7 @@ public class ProcessJobInfoServiceImpl implements ProcessJobInfoService {
                 continue;
             }
 
-            Optional<Job> jobOptional = jobRepository.findJobByJobName(jobName);
+            Optional<Job> jobOptional = jobRepository.findJobByJobNameAndCompany_CompanyName(jobName, jobCompanyName);
             boolean oldJob = jobOptional.isPresent();
             Job job;
             if (oldJob) {

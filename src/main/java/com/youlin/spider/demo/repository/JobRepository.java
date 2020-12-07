@@ -7,5 +7,5 @@ import org.springframework.data.querydsl.QuerydslPredicateExecutor;
 import java.util.Optional;
 
 public interface JobRepository extends JpaRepository<Job, Integer>, QuerydslPredicateExecutor<Job> {
-    Optional<Job> findJobByJobName(String jobName);
+    Optional<Job> findJobByJobNameAndCompany_CompanyName(String jobName, String companyName);
 }
