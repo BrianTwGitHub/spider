@@ -18,10 +18,12 @@ public interface JobService {
      * @param jobAreaId
      * @param companyName
      * @param jobContent
+     * @param isRead
+     * @param isFavorite
      * @param pageable
      * @return
      */
-    public Page<JobInfo> getJobs(String jobName, Integer jobAreaId, String companyName, String jobContent, Pageable pageable);
+    public Page<JobInfo> getJobs(String jobName, Integer jobAreaId, String companyName, String jobContent, Boolean isRead, Boolean isFavorite, Pageable pageable);
 
     /**
      * 重新取得工作內容
@@ -44,4 +46,11 @@ public interface JobService {
      * @param jobId
      */
     public void readJob(Integer jobId);
+
+    /**
+     * 加入/取消我的最愛
+     *
+     * @param jobId
+     */
+    public boolean favoriteJob(Integer jobId);
 }

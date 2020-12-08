@@ -26,8 +26,10 @@ public class JobController {
                                                  @RequestParam(required = false) Integer jobAreaId,
                                                  @RequestParam(required = false) String jobCompanyName,
                                                  @RequestParam(required = false) String jobContent,
+                                                 @RequestParam(required = false) Boolean isRead,
+                                                 @RequestParam(required = false) Boolean isFavorite,
                                                  @PageableDefault Pageable pageable) {
-        return ResponseEntity.ok().body(jobService.getJobs(jobName, jobAreaId, jobCompanyName, jobContent, pageable));
+        return ResponseEntity.ok().body(jobService.getJobs(jobName, jobAreaId, jobCompanyName, jobContent, isRead, isFavorite, pageable));
     }
 
     @GetMapping("/area/list")
@@ -47,5 +49,11 @@ public class JobController {
     public ResponseEntity<Void> readJob(@PathVariable Integer jobId) {
         jobService.readJob(jobId);
         return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{jobId}/favorite")
+    @ApiOperation("加入/取消我的最愛")
+    public ResponseEntity<Boolean> addFavorite(@PathVariable Integer jobId) {
+        return ResponseEntity.ok().body(jobService.favoriteJob(jobId));
     }
 }

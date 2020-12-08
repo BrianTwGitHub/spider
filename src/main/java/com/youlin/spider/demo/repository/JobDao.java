@@ -14,8 +14,10 @@ public interface JobDao {
      * @param companyName
      * @param jobContent
      * @param jobStatus
+     * @param isRead
+     * @param isFavorite
      * @param pageable
      * @return
      */
-    Page<Job> findJobByCondition(String jobName, Integer jobAreaId, String companyName, String jobContent, JobStatus jobStatus, Pageable pageable);
+    Page<Job> findJobByCondition(String jobName, Integer jobAreaId, String companyName, String jobContent, JobStatus jobStatus, Boolean isRead, Boolean isFavorite, Pageable pageable);
 }

@@ -39,7 +39,10 @@ public class Job implements Serializable {
     private String jobUrl;
 
     @Column(name = "is_read")
-    private Boolean isRead;
+    private boolean isRead;
+
+    @Column(name = "is_favorite")
+    private boolean isFavorite;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "job_company_id")

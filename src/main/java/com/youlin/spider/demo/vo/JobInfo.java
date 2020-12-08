@@ -18,4 +18,6 @@ public class JobInfo {
     private String jobSalary;
     private String jobLocation;
     private String jobUrl;
+    private boolean isRead;
+    private boolean isFavorite;
 }

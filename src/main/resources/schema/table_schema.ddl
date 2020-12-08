@@ -65,6 +65,7 @@ CREATE TABLE `job` (
   `job_company_id` int(11) NOT NULL,
   `job_area_id` int(11) NOT NULL,
   `is_read` tinyint(4) NOT NULL DEFAULT '0',
+  `is_favorite` tinyint(4) NOT NULL DEFAULT '0',
   `status` enum('ACTIVATED','DISABLED','DELETED') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'ACTIVATED',
   `create_date` datetime NOT NULL,
   `modify_date` datetime DEFAULT NULL,

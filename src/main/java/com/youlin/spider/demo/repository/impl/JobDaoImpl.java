@@ -22,7 +22,7 @@ public class JobDaoImpl implements JobDao {
     private final JobRepository jobRepository;
 
     @Override
-    public Page<Job> findJobByCondition(String jobName, Integer jobAreaId, String companyName, String jobContent, JobStatus jobStatus, Pageable pageable) {
+    public Page<Job> findJobByCondition(String jobName, Integer jobAreaId, String companyName, String jobContent, JobStatus jobStatus, Boolean isRead, Boolean isFavorite, Pageable pageable) {
         QJob qJob = QJob.job;
 
         BooleanExpression conditions = Expressions.asBoolean(true).isTrue();
@@ -47,6 +47,14 @@ public class JobDaoImpl implements JobDao {
             conditions = conditions.and(qJob.status.ne(JobStatus.DELETE));
         }
 
+        if (isRead != null) {
+            conditions = conditions.and(qJob.isRead.eq(isRead));
+        }
+
+        if (isFavorite != null) {
+            conditions = conditions.and(qJob.isFavorite.eq(isFavorite));
+        }
+        
         return jobRepository.findAll(conditions, pageable);
     }
 

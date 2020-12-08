@@ -44,8 +44,8 @@ public class JobServiceImpl implements JobService {
     private final ProcessJobInfoService processJobInfoService;
 
     @Override
-    public Page<JobInfo> getJobs(String jobName, Integer jobAreaId, String companyName, String jobContent, Pageable pageable) {
-        Page<Job> jobByJobNameLike = jobDao.findJobByCondition(jobName, jobAreaId, companyName, jobContent, JobStatus.DELETE, pageable);
+    public Page<JobInfo> getJobs(String jobName, Integer jobAreaId, String companyName, String jobContent, Boolean isRead, Boolean isFavorite, Pageable pageable) {
+        Page<Job> jobByJobNameLike = jobDao.findJobByCondition(jobName, jobAreaId, companyName, jobContent, JobStatus.DELETE, isRead, isFavorite, pageable);
         if (!jobByJobNameLike.isEmpty()) {
             List<Area> areaList = areaRepository.findAll();
             List<Company> companyList = companyRepository.findAll();
@@ -59,6 +59,8 @@ public class JobServiceImpl implements JobService {
                             .jobSalary(job.getJobSalary())
                             .jobContent(job.getJobContent())
                             .jobUrl(job.getJobUrl())
+                            .isRead(job.isRead())
+                            .isFavorite(job.isFavorite())
                             .build()).collect(Collectors.toList());
             return new PageImpl<>(jobInfoList, pageable, jobByJobNameLike.getTotalElements());
         }
@@ -106,8 +108,23 @@ public class JobServiceImpl implements JobService {
     @Transactional
     public void readJob(Integer jobId) {
         Job job = jobRepository.findById(jobId).orElseThrow(() -> new IllegalArgumentException("Job not found, id:" + jobId));
-        job.setIsRead(true);
+        job.setRead(true);
         jobRepository.save(job);
+    }
+
+    /**
+     * 加入/取消我的最愛
+     *
+     * @param jobId
+     */
+    @Override
+    @Transactional
+    public boolean favoriteJob(Integer jobId) {
+        Job job = jobRepository.findById(jobId).orElseThrow(() -> new IllegalArgumentException("Job not found, id:" + jobId));
+        boolean isFavorite = !job.isFavorite();
+        job.setFavorite(isFavorite);
+        jobRepository.save(job);
+        return isFavorite;
     }
 
 }
