@@ -38,6 +38,9 @@ public class Job implements Serializable {
     @Column(name = "job_url")
     private String jobUrl;
 
+    @Column(name = "is_read")
+    private Boolean isRead;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "job_company_id")
     private Company company;

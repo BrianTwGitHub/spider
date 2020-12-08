@@ -41,4 +41,10 @@ public class JobController {
     public ResponseEntity<JobInfo> updateJob(@PathVariable Integer jobId) {
         return ResponseEntity.ok(jobService.reload(jobId));
     }
+
+    @PostMapping("/{jobId}/read")
+    @ApiOperation("設定Job已讀")
+    public ResponseEntity<JobInfo> readJob(@PathVariable Integer jobId) {
+        return ResponseEntity.ok(jobService.reload(jobId));
+    }
 }

@@ -15,7 +15,7 @@ import java.util.List;
 public class ExecuteJob {
     private final ProcessJobInfoService processJobInfoService;
 
-    @Scheduled(cron = "0 0 12 * * ")
+    @Scheduled(cron = "0 0 12 * * *")
     public void executeGetJobs() {
         log.info("run executeGetJobs");
         List<JobInfo> jobInfos = processJobInfoService.processJobs();

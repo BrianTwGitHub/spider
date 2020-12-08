@@ -96,4 +96,18 @@ public class JobServiceImpl implements JobService {
         iterable.forEach(result::add);
         return result.stream().map(area -> new JobArea(area.getId(), area.getAreaName())).collect(Collectors.toList());
     }
+
+    /**
+     * 設定Job已讀
+     *
+     * @param jobId
+     */
+    @Override
+    @Transactional
+    public void readJob(Integer jobId) {
+        Job job = jobRepository.findById(jobId).orElseThrow(() -> new IllegalArgumentException("Job not found, id:" + jobId));
+        job.setIsRead(true);
+        jobRepository.save(job);
+    }
+
 }

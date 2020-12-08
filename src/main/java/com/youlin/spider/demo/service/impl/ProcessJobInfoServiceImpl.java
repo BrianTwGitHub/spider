@@ -66,7 +66,7 @@ public class ProcessJobInfoServiceImpl implements ProcessJobInfoService {
                     .queryParam("ro", "1") // 限定全職的工作
                     .queryParam("keyword", "Java") // 關鍵字
                     .queryParam("area", "6001001000,6001002000") // 限定在 6001001000 台北, 6001002000 新北的工作
-                    .queryParam("isnew", "30") // 最近一個月有更新的過的職缺
+                    .queryParam("isnew", "3") // 最近一個月有更新的過的職缺
                     .queryParam("mode", "l") // 清單的瀏覽模式
                     .build();
             String url = uriComponents.toUriString();

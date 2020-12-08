@@ -37,4 +37,11 @@ public interface JobService {
      * @return
      */
     public List<JobArea> getJobAreaList();
+
+    /**
+     * 設定Job已讀
+     *
+     * @param jobId
+     */
+    public void readJob(Integer jobId);
 }
