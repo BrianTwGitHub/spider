@@ -52,6 +52,10 @@ public class Job implements Serializable {
     @JoinColumn(name = "job_area_id", nullable = false)
     private Area area;
 
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "job_update_date")
+    private Date jobUpdateDate;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private JobStatus status;

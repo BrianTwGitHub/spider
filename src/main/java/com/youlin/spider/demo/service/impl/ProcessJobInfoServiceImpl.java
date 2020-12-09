@@ -258,16 +258,13 @@ public class ProcessJobInfoServiceImpl implements ProcessJobInfoService {
         String jobContent = "";
         String jobSalary = "";
         String jobLocation = "";
-        String lastUpdateDate = "";
+        String jobUpdateDateStr = "";
         try {
-            // "job-requirement col";
             jobContent = headlessDriver.findElementByClassName("job-description__content").getText();
             jobSalary = headlessDriver.findElementByClassName("monthly-salary").getText();
             WebElement parent = headlessDriver.findElementByClassName("jb_icon_location").findElement(By.xpath("./.."));
             jobLocation = parent.getText();
-            lastUpdateDate = headlessDriver.findElementByClassName("job-header__title").findElement(By.className("text-gray-darker")).findElement(By.tagName("span")).getText();
-            Date date = DateUtils.parseUpdateDate(lastUpdateDate);
-            jobInfo.setLastUpdateDate(date);
+            jobUpdateDateStr = headlessDriver.findElementByClassName("job-header__title").findElement(By.className("text-gray-darker")).findElement(By.tagName("span")).getText();
         } catch (NoSuchElementException e) {
             log.error(String.format("can't find content, url:%s", url), e);
         }
@@ -287,18 +284,21 @@ public class ProcessJobInfoServiceImpl implements ProcessJobInfoService {
                 job.setStatus(JobStatus.DELETED);
             }
         }
-
+        Date jobUpdateDate = DateUtils.parseUpdateDate(jobUpdateDateStr);
         job.setJobLocation(jobLocation);
         job.setJobSalary(jobSalary);
+        job.setJobUpdateDate(jobUpdateDate);
 
         if (oldJob && !job.getJobContent().equals(jobContent)) {
             job.setJobContent(jobContent);
+            jobRepository.save(job);
+        } else if (oldJob && job.getJobUpdateDate().toInstant().getEpochSecond() < jobUpdateDate.toInstant().getEpochSecond()) {
             jobRepository.save(job);
         } else if (!oldJob) {
             job.setJobContent(jobContent);
             jobRepository.save(job);
         }
-
+        jobInfo.setLastUpdateDate(jobUpdateDate);
         jobInfo.setJobContent(jobContent);
         jobInfo.setJobLocation(jobLocation);
         jobInfo.setJobSalary(jobSalary);

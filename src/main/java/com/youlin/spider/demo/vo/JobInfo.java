@@ -21,7 +21,7 @@ public class JobInfo {
     private String jobSalary;
     private String jobLocation;
     private String jobUrl;
-    @JsonFormat(pattern = "yyyy/MM/dd")
+    @JsonFormat(pattern = "yyyy/MM/dd", timezone = "Asia/Taipei")
     private Date lastUpdateDate;
     private boolean isRead;
     private boolean isFavorite;

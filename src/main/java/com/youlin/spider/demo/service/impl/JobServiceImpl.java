@@ -74,7 +74,7 @@ public class JobServiceImpl implements JobService {
     @Override
     @Transactional
     public JobInfo reload(Integer jobId) {
-        ChromeDriver chromeDriver = new ChromeDriver(new ChromeOptions().setHeadless(false));
+        ChromeDriver chromeDriver = new ChromeDriver(new ChromeOptions().setHeadless(true));
         try {
             Job job = jobRepository.findById(jobId).orElseThrow(() -> new IllegalArgumentException("Job not found, id:" + jobId));
             JobInfo jobInfo = new JobInfo();
