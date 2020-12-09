@@ -45,6 +45,12 @@ public class ProcessJobInfoServiceImpl implements ProcessJobInfoService {
     @Value("#{'${demo.exclude.area.names.keyword:none}'.split(',')}")
     private List<String> excludeAreaKeyWordList;
 
+    @Value("${monthly.minimum.wage:40000}")
+    private Integer monthlyMinimumWage;
+
+    @Value("${yearly.minimum.wage:500000}")
+    private Integer yearlyMinimumWage;
+
     private final JobRepository jobRepository;
     private final CompanyRepository companyRepository;
     private final AreaRepository areaRepository;
@@ -252,16 +258,34 @@ public class ProcessJobInfoServiceImpl implements ProcessJobInfoService {
         String jobContent = "";
         String jobSalary = "";
         String jobLocation = "";
+        String lastUpdateDate = "";
         try {
             // "job-requirement col";
             jobContent = headlessDriver.findElementByClassName("job-description__content").getText();
             jobSalary = headlessDriver.findElementByClassName("monthly-salary").getText();
             WebElement parent = headlessDriver.findElementByClassName("jb_icon_location").findElement(By.xpath("./.."));
             jobLocation = parent.getText();
-
-            // log.debug("jobContent: {}", jobContent);
+            lastUpdateDate = headlessDriver.findElementByClassName("job-header__title").findElement(By.className("text-gray-darker")).findElement(By.tagName("span")).getText();
+            Date date = DateUtils.parseUpdateDate(lastUpdateDate);
+            jobInfo.setLastUpdateDate(date);
         } catch (NoSuchElementException e) {
-            log.error(String.format("can't find content, url:%s", url));
+            log.error(String.format("can't find content, url:%s", url), e);
+        }
+
+        if (jobSalary.startsWith("月薪") || jobSalary.startsWith("年薪")) {
+            boolean isMonthlySalary = jobSalary.startsWith("月薪");
+            String[] matchString = jobSalary.replaceAll("(,|月薪|年薪|元|以上)", "").split("~");
+            int minSalary = isMonthlySalary ? monthlyMinimumWage : yearlyMinimumWage;
+            boolean enoughSalary = false;
+            for (String salary : matchString) {
+                if (Integer.parseInt(salary) > minSalary) {
+                    enoughSalary = true;
+                    break;
+                }
+            }
+            if (!enoughSalary) {
+                job.setStatus(JobStatus.DELETED);
+            }
         }
 
         job.setJobLocation(jobLocation);

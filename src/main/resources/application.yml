@@ -47,6 +47,12 @@ demo:
     area:
       names:
         keyword:
+  monthly:
+    minimum:
+      wage: 70_000
+  yearly:
+    minimum:
+      wage: 1_000_000
 
 logging:
   level:
