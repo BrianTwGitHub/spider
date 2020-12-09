@@ -8,6 +8,7 @@ import com.youlin.spider.demo.repository.AreaRepository;
 import com.youlin.spider.demo.repository.CompanyRepository;
 import com.youlin.spider.demo.repository.JobRepository;
 import com.youlin.spider.demo.service.ProcessJobInfoService;
+import com.youlin.spider.demo.utils.DateUtils;
 import com.youlin.spider.demo.vo.JobInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -58,7 +59,7 @@ public class ProcessJobInfoServiceImpl implements ProcessJobInfoService {
 
     @Override
     @Transactional
-    public List<JobInfo> processJobs() {
+    public List<JobInfo> processJobs(Integer effectiveDays) {
         ChromeDriver driver = new ChromeDriver(chromeOptions);
         try {
             UriComponents uriComponents = UriComponentsBuilder
@@ -66,7 +67,7 @@ public class ProcessJobInfoServiceImpl implements ProcessJobInfoService {
                     .queryParam("ro", "1") // 限定全職的工作
                     .queryParam("keyword", "Java") // 關鍵字
                     .queryParam("area", "6001001000,6001002000") // 限定在 6001001000 台北, 6001002000 新北的工作
-                    .queryParam("isnew", "3") // 最近一個月有更新的過的職缺
+                    .queryParam("isnew", effectiveDays) // 最近一個月有更新的過的職缺
                     .queryParam("mode", "l") // 清單的瀏覽模式
                     .build();
             String url = uriComponents.toUriString();
@@ -274,7 +275,7 @@ public class ProcessJobInfoServiceImpl implements ProcessJobInfoService {
             jobRepository.save(job);
         }
 
-        jobInfo.setJobCompany(jobContent);
+        jobInfo.setJobContent(jobContent);
         jobInfo.setJobLocation(jobLocation);
         jobInfo.setJobSalary(jobSalary);
         return jobInfo;

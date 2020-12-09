@@ -45,7 +45,7 @@ public class JobServiceImpl implements JobService {
 
     @Override
     public Page<JobInfo> getJobs(String jobName, Integer jobAreaId, String companyName, String jobContent, Boolean isRead, Boolean isFavorite, Pageable pageable) {
-        Page<Job> jobByJobNameLike = jobDao.findJobByCondition(jobName, jobAreaId, companyName, jobContent, JobStatus.DELETE, isRead, isFavorite, pageable);
+        Page<Job> jobByJobNameLike = jobDao.findJobByCondition(jobName, jobAreaId, companyName, jobContent, JobStatus.DELETED, isRead, isFavorite, pageable);
         if (!jobByJobNameLike.isEmpty()) {
             List<Area> areaList = areaRepository.findAll();
             List<Company> companyList = companyRepository.findAll();
@@ -74,13 +74,18 @@ public class JobServiceImpl implements JobService {
     @Override
     @Transactional
     public JobInfo reload(Integer jobId) {
-        Job job = jobRepository.findById(jobId).orElseThrow(() -> new IllegalArgumentException("Job not found, id:" + jobId));
-        JobInfo jobInfo = new JobInfo();
-        jobInfo.setJobName(job.getJobName());
-        jobInfo.setJobCompany(job.getCompany().getCompanyName());
-        jobInfo.setJobArea(job.getArea().getAreaName());
-        jobInfo.setJobUrl(job.getJobUrl());
-        return processJobInfoService.getJobInfo(job, jobInfo, job.getJobUrl(), new ChromeDriver(new ChromeOptions().setHeadless(false)), true);
+        ChromeDriver chromeDriver = new ChromeDriver(new ChromeOptions().setHeadless(false));
+        try {
+            Job job = jobRepository.findById(jobId).orElseThrow(() -> new IllegalArgumentException("Job not found, id:" + jobId));
+            JobInfo jobInfo = new JobInfo();
+            jobInfo.setJobName(job.getJobName());
+            jobInfo.setJobCompany(job.getCompany().getCompanyName());
+            jobInfo.setJobArea(job.getArea().getAreaName());
+            jobInfo.setJobUrl(job.getJobUrl());
+            return processJobInfoService.getJobInfo(job, jobInfo, job.getJobUrl(), chromeDriver, true);
+        } finally {
+            chromeDriver.quit();
+        }
     }
 
     /**
@@ -89,7 +94,7 @@ public class JobServiceImpl implements JobService {
     @Override
     public List<JobArea> getJobAreaList() {
         QArea condition = QArea.area;
-        Iterable<Area> iterable = areaRepository.findAll(condition.status.ne(JobStatus.DELETE));
+        Iterable<Area> iterable = areaRepository.findAll(condition.status.ne(JobStatus.DELETED));
         if (!iterable.iterator().hasNext()) {
             return Collections.emptyList();
 

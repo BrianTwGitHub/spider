@@ -7,7 +7,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 import java.util.List;
 
 public interface ProcessJobInfoService {
-    List<JobInfo> processJobs();
+    List<JobInfo> processJobs(Integer effectiveDays);
 
     JobInfo getJobInfo(Job job, JobInfo jobInfo, String url, ChromeDriver headlessDriver, boolean oldJob);
 }

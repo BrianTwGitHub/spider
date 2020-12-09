@@ -44,7 +44,7 @@ public class JobDaoImpl implements JobDao {
         }
 
         if (jobStatus != null) {
-            conditions = conditions.and(qJob.status.ne(JobStatus.DELETE));
+            conditions = conditions.and(qJob.status.ne(JobStatus.DELETED));
         }
 
         if (isRead != null) {
@@ -54,7 +54,7 @@ public class JobDaoImpl implements JobDao {
         if (isFavorite != null) {
             conditions = conditions.and(qJob.isFavorite.eq(isFavorite));
         }
-        
+
         return jobRepository.findAll(conditions, pageable);
     }
 

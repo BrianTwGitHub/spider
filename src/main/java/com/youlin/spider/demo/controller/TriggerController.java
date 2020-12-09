@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -17,7 +18,7 @@ public class TriggerController {
     private final ProcessJobInfoService processJobInfoService;
 
     @GetMapping("/jobs")
-    public ResponseEntity<List<JobInfo>> processJobInfoList() {
-        return ResponseEntity.ok(processJobInfoService.processJobs());
+    public ResponseEntity<List<JobInfo>> processJobInfoList(@RequestParam(required = false, defaultValue = "1") Integer effectiveDays) {
+        return ResponseEntity.ok(processJobInfoService.processJobs(effectiveDays));
     }
 }
