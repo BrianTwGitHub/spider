@@ -1,9 +1,6 @@
 package com.youlin.spider.demo.service.impl;
 
-import com.youlin.spider.demo.entity.Area;
-import com.youlin.spider.demo.entity.Company;
-import com.youlin.spider.demo.entity.Job;
-import com.youlin.spider.demo.entity.QArea;
+import com.youlin.spider.demo.entity.*;
 import com.youlin.spider.demo.enums.JobStatus;
 import com.youlin.spider.demo.repository.AreaRepository;
 import com.youlin.spider.demo.repository.CompanyRepository;
@@ -83,6 +80,38 @@ public class JobServiceImpl implements JobService {
             jobInfo.setJobArea(job.getArea().getAreaName());
             jobInfo.setJobUrl(job.getJobUrl());
             return processJobInfoService.getJobInfo(job, jobInfo, job.getJobUrl(), chromeDriver, true);
+        } finally {
+            chromeDriver.quit();
+        }
+    }
+
+    /**
+     * 重新取得工作內容
+     *
+     * @return
+     */
+    @Override
+    @Transactional
+    public List<JobInfo> failedReload() {
+        ChromeDriver chromeDriver = new ChromeDriver(new ChromeOptions().setHeadless(true));
+        try {
+            QJob qJob = QJob.job;
+            Iterable<Job> iterable = jobRepository.findAll(qJob.jobContent.eq(""));
+            if (!iterable.iterator().hasNext()) {
+                return Collections.emptyList();
+
+            }
+            List<JobInfo> jobInfoList = new ArrayList<>();
+            for (Job job : iterable) {
+                JobInfo jobInfo = new JobInfo();
+                jobInfo.setJobName(job.getJobName());
+                jobInfo.setJobCompany(job.getCompany().getCompanyName());
+                jobInfo.setJobArea(job.getArea().getAreaName());
+                jobInfo.setJobUrl(job.getJobUrl());
+                processJobInfoService.getJobInfo(job, jobInfo, job.getJobUrl(), chromeDriver, true);
+                jobInfoList.add(jobInfo);
+            }
+            return jobInfoList;
         } finally {
             chromeDriver.quit();
         }

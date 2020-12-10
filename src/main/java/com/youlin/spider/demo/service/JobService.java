@@ -34,6 +34,13 @@ public interface JobService {
     public JobInfo reload(Integer jobId);
 
     /**
+     * 重新取得工作內容
+     *
+     * @return
+     */
+    public List<JobInfo> failedReload();
+
+    /**
      * 取得所有工作地區
      *
      * @return

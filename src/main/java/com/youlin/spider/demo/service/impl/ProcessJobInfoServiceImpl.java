@@ -10,13 +10,16 @@ import com.youlin.spider.demo.repository.JobRepository;
 import com.youlin.spider.demo.service.ProcessJobInfoService;
 import com.youlin.spider.demo.utils.DateUtils;
 import com.youlin.spider.demo.vo.JobInfo;
+import io.micrometer.core.instrument.util.StringUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
@@ -45,10 +48,10 @@ public class ProcessJobInfoServiceImpl implements ProcessJobInfoService {
     @Value("#{'${demo.exclude.area.names.keyword:none}'.split(',')}")
     private List<String> excludeAreaKeyWordList;
 
-    @Value("${monthly.minimum.wage:40000}")
+    @Value("${demo.monthly.minimum.wage:40000}")
     private Integer monthlyMinimumWage;
 
-    @Value("${yearly.minimum.wage:500000}")
+    @Value("${demo.yearly.minimum.wage:500000}")
     private Integer yearlyMinimumWage;
 
     private final JobRepository jobRepository;
@@ -254,7 +257,11 @@ public class ProcessJobInfoServiceImpl implements ProcessJobInfoService {
     @Override
     public JobInfo getJobInfo(Job job, JobInfo jobInfo, String url, ChromeDriver headlessDriver, boolean oldJob) {
         headlessDriver.get(url);
-
+        WebDriverWait wait = new WebDriverWait(headlessDriver, 5L);
+        wait.withMessage("timeout to loading page: " + url).until((ExpectedCondition<Boolean>) driver -> {
+            assert driver != null;
+            return ((JavascriptExecutor) driver).executeScript("return document.readyState").equals("complete");
+        });
         String jobContent = "";
         String jobSalary = "";
         String jobLocation = "";
@@ -284,26 +291,30 @@ public class ProcessJobInfoServiceImpl implements ProcessJobInfoService {
                 job.setStatus(JobStatus.DELETED);
             }
         }
-        Date jobUpdateDate = DateUtils.parseUpdateDate(jobUpdateDateStr);
         job.setJobLocation(jobLocation);
         job.setJobSalary(jobSalary);
-        job.setJobUpdateDate(jobUpdateDate);
+
+
+        if (StringUtils.isNotBlank(jobUpdateDateStr)) {
+            Date jobUpdateDate = DateUtils.parseUpdateDate(jobUpdateDateStr);
+            job.setJobUpdateDate(jobUpdateDate);
+            jobInfo.setLastUpdateDate(jobUpdateDate);
+        }
 
         if (oldJob && !job.getJobContent().equals(jobContent)) {
             job.setJobContent(jobContent);
-            jobRepository.save(job);
-        } else if (oldJob && job.getJobUpdateDate().toInstant().getEpochSecond() < jobUpdateDate.toInstant().getEpochSecond()) {
             jobRepository.save(job);
         } else if (!oldJob) {
             job.setJobContent(jobContent);
             jobRepository.save(job);
         }
-        jobInfo.setLastUpdateDate(jobUpdateDate);
+
         jobInfo.setJobContent(jobContent);
         jobInfo.setJobLocation(jobLocation);
         jobInfo.setJobSalary(jobSalary);
         return jobInfo;
     }
+
 
 }
 

@@ -44,6 +44,12 @@ public class JobController {
         return ResponseEntity.ok(jobService.reload(jobId));
     }
 
+    @PostMapping("/failed/reload")
+    @ApiOperation("重新取得Job內容")
+    public ResponseEntity<List<JobInfo>> failedReload() {
+        return ResponseEntity.ok(jobService.failedReload());
+    }
+
     @PostMapping("/{jobId}/read")
     @ApiOperation("設定Job已讀")
     public ResponseEntity<Void> readJob(@PathVariable Integer jobId) {
