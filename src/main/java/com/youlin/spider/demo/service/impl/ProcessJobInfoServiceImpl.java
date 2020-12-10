@@ -294,17 +294,26 @@ public class ProcessJobInfoServiceImpl implements ProcessJobInfoService {
         job.setJobLocation(jobLocation);
         job.setJobSalary(jobSalary);
 
+        if (oldJob) {
+            boolean updateJob = false;
+            if (!job.getJobContent().equals(jobContent)) {
+                job.setJobContent(jobContent);
+                updateJob = true;
+            }
 
-        if (StringUtils.isNotBlank(jobUpdateDateStr)) {
-            Date jobUpdateDate = DateUtils.parseUpdateDate(jobUpdateDateStr);
-            job.setJobUpdateDate(jobUpdateDate);
-            jobInfo.setLastUpdateDate(jobUpdateDate);
-        }
+            if (StringUtils.isNotBlank(jobUpdateDateStr)) {
+                Date jobUpdateDate = DateUtils.parseUpdateDate(jobUpdateDateStr);
+                if (job.getJobUpdateDate() != null && job.getJobUpdateDate().getTime() + (7 * 24 * 60 * 60 * 1000) > jobUpdateDate.getTime()) {
+                    job.setJobUpdateDate(jobUpdateDate);
+                    updateJob = true;
+                }
+                jobInfo.setJobUpdateDate(jobUpdateDate);
+            }
 
-        if (oldJob && !job.getJobContent().equals(jobContent)) {
-            job.setJobContent(jobContent);
-            jobRepository.save(job);
-        } else if (!oldJob) {
+            if (updateJob) {
+                jobRepository.save(job);
+            }
+        } else {
             job.setJobContent(jobContent);
             jobRepository.save(job);
         }

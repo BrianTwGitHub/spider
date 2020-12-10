@@ -15,7 +15,7 @@ public interface JobService {
      * 取得工作列表
      *
      * @param jobName
-     * @param jobAreaId
+     * @param jobAreaIds
      * @param companyName
      * @param jobContent
      * @param isRead
@@ -23,7 +23,7 @@ public interface JobService {
      * @param pageable
      * @return
      */
-    public Page<JobInfo> getJobs(String jobName, Integer jobAreaId, String companyName, String jobContent, Boolean isRead, Boolean isFavorite, Pageable pageable);
+    public Page<JobInfo> getJobs(String jobName, List<Integer> jobAreaIds, String companyName, String jobContent, Boolean isRead, Boolean isFavorite, Pageable pageable);
 
     /**
      * 重新取得工作內容

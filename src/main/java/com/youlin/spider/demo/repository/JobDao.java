@@ -5,12 +5,14 @@ import com.youlin.spider.demo.enums.JobStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.List;
+
 public interface JobDao {
     /**
      * 取得工作清單
      *
      * @param jobName
-     * @param jobAreaId
+     * @param jobAreaIds
      * @param companyName
      * @param jobContent
      * @param jobStatus
@@ -19,5 +21,5 @@ public interface JobDao {
      * @param pageable
      * @return
      */
-    Page<Job> findJobByCondition(String jobName, Integer jobAreaId, String companyName, String jobContent, JobStatus jobStatus, Boolean isRead, Boolean isFavorite, Pageable pageable);
+    Page<Job> findJobByCondition(String jobName, List<Integer> jobAreaIds, String companyName, String jobContent, JobStatus jobStatus, Boolean isRead, Boolean isFavorite, Pageable pageable);
 }

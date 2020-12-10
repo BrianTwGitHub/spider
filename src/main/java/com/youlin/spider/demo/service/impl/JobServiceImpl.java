@@ -41,8 +41,8 @@ public class JobServiceImpl implements JobService {
     private final ProcessJobInfoService processJobInfoService;
 
     @Override
-    public Page<JobInfo> getJobs(String jobName, Integer jobAreaId, String companyName, String jobContent, Boolean isRead, Boolean isFavorite, Pageable pageable) {
-        Page<Job> jobByJobNameLike = jobDao.findJobByCondition(jobName, jobAreaId, companyName, jobContent, JobStatus.DELETED, isRead, isFavorite, pageable);
+    public Page<JobInfo> getJobs(String jobName, List<Integer> jobAreaIds, String companyName, String jobContent, Boolean isRead, Boolean isFavorite, Pageable pageable) {
+        Page<Job> jobByJobNameLike = jobDao.findJobByCondition(jobName, jobAreaIds, companyName, jobContent, JobStatus.DELETED, isRead, isFavorite, pageable);
         if (!jobByJobNameLike.isEmpty()) {
             List<Area> areaList = areaRepository.findAll();
             List<Company> companyList = companyRepository.findAll();
@@ -58,6 +58,7 @@ public class JobServiceImpl implements JobService {
                             .jobUrl(job.getJobUrl())
                             .isRead(job.isRead())
                             .isFavorite(job.isFavorite())
+                            .jobUpdateDate(job.getJobUpdateDate())
                             .build()).collect(Collectors.toList());
             return new PageImpl<>(jobInfoList, pageable, jobByJobNameLike.getTotalElements());
         }

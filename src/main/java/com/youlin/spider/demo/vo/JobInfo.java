@@ -22,7 +22,7 @@ public class JobInfo {
     private String jobLocation;
     private String jobUrl;
     @JsonFormat(pattern = "yyyy/MM/dd", timezone = "Asia/Taipei")
-    private Date lastUpdateDate;
+    private Date jobUpdateDate;
     private boolean isRead;
     private boolean isFavorite;
 }

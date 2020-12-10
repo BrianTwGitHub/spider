@@ -12,7 +12,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
+
+import java.util.List;
 
 @Repository
 @RequiredArgsConstructor
@@ -22,7 +25,7 @@ public class JobDaoImpl implements JobDao {
     private final JobRepository jobRepository;
 
     @Override
-    public Page<Job> findJobByCondition(String jobName, Integer jobAreaId, String companyName, String jobContent, JobStatus jobStatus, Boolean isRead, Boolean isFavorite, Pageable pageable) {
+    public Page<Job> findJobByCondition(String jobName, List<Integer> jobAreaIds, String companyName, String jobContent, JobStatus jobStatus, Boolean isRead, Boolean isFavorite, Pageable pageable) {
         QJob qJob = QJob.job;
 
         BooleanExpression conditions = Expressions.asBoolean(true).isTrue();
@@ -31,8 +34,8 @@ public class JobDaoImpl implements JobDao {
             conditions = conditions.and(qJob.jobName.containsIgnoreCase(jobName));
         }
 
-        if (jobAreaId != null) {
-            conditions = conditions.and(qJob.area.id.eq(jobAreaId));
+        if (!CollectionUtils.isEmpty(jobAreaIds)) {
+            conditions = conditions.and(qJob.area.id.in(jobAreaIds));
         }
 
         if (StringUtils.hasLength(companyName)) {
