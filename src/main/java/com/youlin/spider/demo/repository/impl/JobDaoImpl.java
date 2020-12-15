@@ -10,11 +10,14 @@ import com.youlin.spider.demo.repository.JobRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Repository
@@ -57,8 +60,23 @@ public class JobDaoImpl implements JobDao {
         if (isFavorite != null) {
             conditions = conditions.and(qJob.isFavorite.eq(isFavorite));
         }
+        Sort sort = pageable.getSort();
+        List<Sort.Order> newOrders = new ArrayList<>();
 
-        return jobRepository.findAll(conditions, pageable);
+        for (Sort.Order order : sort) {
+            String propertyName = order.getProperty();
+            Sort.Direction direction = order.isDescending() ? Sort.Direction.DESC : Sort.Direction.ASC;
+            if (order.getProperty().equalsIgnoreCase("jobArea")) {
+                propertyName = "area.id";
+            } else if (order.getProperty().equalsIgnoreCase("jobCompany")) {
+                propertyName = "company.id";
+            }
+            newOrders.add(Sort.Order.by(propertyName).with(direction));
+        }
+
+        newOrders.add(Sort.Order.desc("jobUpdateDate"));
+
+        return jobRepository.findAll(conditions, PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(newOrders)));
     }
 
 }
