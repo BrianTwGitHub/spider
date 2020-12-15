@@ -303,7 +303,8 @@ public class ProcessJobInfoServiceImpl implements ProcessJobInfoService {
 
             if (StringUtils.isNotBlank(jobUpdateDateStr)) {
                 Date jobUpdateDate = DateUtils.parseUpdateDate(jobUpdateDateStr);
-                if (job.getJobUpdateDate() != null && job.getJobUpdateDate().getTime() + (7 * 24 * 60 * 60 * 1000) > jobUpdateDate.getTime()) {
+                if (job.getJobUpdateDate() == null ||
+                        (job.getJobUpdateDate() != null && job.getJobUpdateDate().getTime() + (7 * 24 * 60 * 60 * 1000) > jobUpdateDate.getTime())) {
                     job.setJobUpdateDate(jobUpdateDate);
                     updateJob = true;
                 }

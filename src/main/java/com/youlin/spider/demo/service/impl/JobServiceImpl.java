@@ -97,7 +97,7 @@ public class JobServiceImpl implements JobService {
         ChromeDriver chromeDriver = new ChromeDriver(new ChromeOptions().setHeadless(true));
         try {
             QJob qJob = QJob.job;
-            Iterable<Job> iterable = jobRepository.findAll(qJob.jobContent.eq(""));
+            Iterable<Job> iterable = jobRepository.findAll(qJob.jobContent.eq("").or(qJob.jobUpdateDate.isNull()));
             if (!iterable.iterator().hasNext()) {
                 return Collections.emptyList();
 
