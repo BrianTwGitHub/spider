@@ -41,4 +41,4 @@ java -jar target/spider.jar
 ```
 
 ## License
-![Algorithm schema](./LICENSE)
+![License](./LICENSE)
