@@ -12,6 +12,7 @@ import com.youlin.spider.demo.vo.JobArea;
 import com.youlin.spider.demo.vo.JobInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.openqa.selenium.By;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.springframework.data.domain.Page;
@@ -47,19 +48,23 @@ public class JobServiceImpl implements JobService {
             List<Area> areaList = areaRepository.findAll();
             List<Company> companyList = companyRepository.findAll();
             List<JobInfo> jobInfoList = jobByJobNameLike.getContent().stream()
-                    .map(job -> JobInfo.builder()
-                            .jobId(job.getId())
-                            .jobName(job.getJobName())
-                            .jobCompany(companyList.stream().filter(company -> company.getId().equals(job.getCompany().getId())).findFirst().orElseThrow(() -> new IllegalArgumentException("can not found company, id:" + job.getCompany().getId())).getCompanyName())
-                            .jobArea(areaList.stream().filter(area -> area.getId().equals(job.getArea().getId())).findFirst().orElseThrow(() -> new IllegalArgumentException("can not found area, id: " + job.getArea().getId())).getAreaName())
-                            .jobLocation(job.getJobLocation())
-                            .jobSalary(job.getJobSalary())
-                            .jobContent(job.getJobContent())
-                            .jobUrl(job.getJobUrl())
-                            .isRead(job.isRead())
-                            .isFavorite(job.isFavorite())
-                            .jobUpdateDate(job.getJobUpdateDate())
-                            .build()).collect(Collectors.toList());
+                    .map(job -> {
+                        Company thisCompany = companyList.stream().filter(company -> company.getId().equals(job.getCompany().getId())).findFirst().orElseThrow(() -> new IllegalArgumentException("can not found company, id:" + job.getCompany().getId()));
+                        return JobInfo.builder()
+                                .jobId(job.getId())
+                                .jobName(job.getJobName())
+                                .jobCompany(thisCompany.getCompanyName())
+                                .jobArea(areaList.stream().filter(area -> area.getId().equals(job.getArea().getId())).findFirst().orElseThrow(() -> new IllegalArgumentException("can not found area, id: " + job.getArea().getId())).getAreaName())
+                                .jobLocation(job.getJobLocation())
+                                .jobSalary(job.getJobSalary())
+                                .jobContent(job.getJobContent())
+                                .jobUrl(job.getJobUrl())
+                                .jobCompanyUrl(thisCompany.getCompanyUrl())
+                                .isRead(job.isRead())
+                                .isFavorite(job.isFavorite())
+                                .jobUpdateDate(job.getJobUpdateDate())
+                                .build();
+                    }).collect(Collectors.toList());
             return new PageImpl<>(jobInfoList, pageable, jobByJobNameLike.getTotalElements());
         }
         return new PageImpl<>(Collections.emptyList(), pageable, 0);
@@ -164,6 +169,41 @@ public class JobServiceImpl implements JobService {
         job.setFavorite(isFavorite);
         jobRepository.save(job);
         return isFavorite;
+    }
+
+    /**
+     * 重新取得公司連結
+     */
+    @Override
+    @Transactional
+    public void reloadCompanyUrl() {
+        ChromeDriver chromeDriver = null;
+        try {
+            QCompany qCompany = QCompany.company;
+            Iterable<Company> companies = companyRepository.findAll(qCompany.companyUrl.isNull());
+            if (companies.iterator().hasNext()) {
+                chromeDriver = new ChromeDriver(new ChromeOptions().setHeadless(true));
+                for (Company company : companies) {
+                    Job job = company.getJobs().get(0);
+                    if (JobStatus.DELETED != job.getStatus()) {
+                        String jobUrl = company.getJobs().get(0).getJobUrl();
+                        chromeDriver.get(jobUrl);
+                        try {
+                            String companyUrl = chromeDriver.findElementByClassName("job-header__title").findElement(By.tagName("a")).getAttribute("href");
+                            company.setCompanyUrl(companyUrl);
+                            companyRepository.save(company);
+                        } catch (Exception e) {
+                            log.error("can't find company url: {}", company.getCompanyName(), e);
+                        }
+                    }
+                }
+            }
+        } finally {
+            if (chromeDriver != null) {
+                chromeDriver.quit();
+            }
+        }
+
     }
 
 }

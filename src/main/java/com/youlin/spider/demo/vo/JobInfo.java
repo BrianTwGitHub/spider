@@ -23,6 +23,7 @@ public class JobInfo {
     private String jobUrl;
     @JsonFormat(pattern = "yyyy/MM/dd", timezone = "Asia/Taipei")
     private Date jobUpdateDate;
+    private String jobCompanyUrl;
     private boolean isRead;
     private boolean isFavorite;
 }

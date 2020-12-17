@@ -60,4 +60,9 @@ public interface JobService {
      * @param jobId
      */
     public boolean favoriteJob(Integer jobId);
+
+    /**
+     * 重新取得公司連結
+     */
+    public void reloadCompanyUrl();
 }
