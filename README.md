@@ -23,13 +23,13 @@ demo:
   exclude:
     company:
       names:
-        keyword: // exclude company name, spilt by ','
+        keyword: // exclude company name, split by ','
     job:
       names:
-        keyword: // exclude job name, spilt by ',', for example: PHP
+        keyword: // exclude job name, split by ',', for example: PHP
     area:
       names:
-        keyword: // exclude area name, spilt by ',', for example: Taipei
+        keyword: // exclude area name, split by ',', for example: Taipei
 ```
 
 ## Running the Samples From the Command Line
