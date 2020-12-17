@@ -94,14 +94,16 @@ public class JobServiceImpl implements JobService {
     @Override
     @Transactional
     public List<JobInfo> failedReload() {
-        ChromeDriver chromeDriver = new ChromeDriver(new ChromeOptions().setHeadless(true));
+        ChromeDriver chromeDriver = null;
         try {
             QJob qJob = QJob.job;
-            Iterable<Job> iterable = jobRepository.findAll(qJob.jobContent.eq("").or(qJob.jobUpdateDate.isNull()));
+            Iterable<Job> iterable = jobRepository.findAll(qJob.status.ne(JobStatus.DELETED).and(qJob.jobContent.eq("").or(qJob.jobUpdateDate.isNull())));
             if (!iterable.iterator().hasNext()) {
                 return Collections.emptyList();
 
             }
+            chromeDriver = new ChromeDriver(new ChromeOptions().setHeadless(true));
+
             List<JobInfo> jobInfoList = new ArrayList<>();
             for (Job job : iterable) {
                 JobInfo jobInfo = new JobInfo();
@@ -114,7 +116,9 @@ public class JobServiceImpl implements JobService {
             }
             return jobInfoList;
         } finally {
-            chromeDriver.quit();
+            if (chromeDriver != null) {
+                chromeDriver.quit();
+            }
         }
     }
 

@@ -29,7 +29,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -57,19 +56,11 @@ public class ProcessJobInfoServiceImpl implements ProcessJobInfoService {
     private final JobRepository jobRepository;
     private final CompanyRepository companyRepository;
     private final AreaRepository areaRepository;
-    private ChromeOptions chromeOptions;
-
-    @PostConstruct
-    public void init() {
-        chromeOptions = new ChromeOptions();
-        // disabled ui
-        chromeOptions.setHeadless(false);
-    }
 
     @Override
     @Transactional
     public List<JobInfo> processJobs(Integer effectiveDays) {
-        ChromeDriver driver = new ChromeDriver(chromeOptions);
+        ChromeDriver driver = new ChromeDriver();
         try {
             UriComponents uriComponents = UriComponentsBuilder
                     .fromPath("https://www.104.com.tw/jobs/search/")
@@ -177,13 +168,14 @@ public class ProcessJobInfoServiceImpl implements ProcessJobInfoService {
 
         Map<String, Integer> excludeCount = new HashMap<>();
 
-        ChromeDriver headlessDriver = new ChromeDriver(chromeOptions);
+        ChromeDriver headlessDriver = new ChromeDriver(new ChromeOptions().setHeadless(true));
         for (WebElement webElement : jobList) {
             String href = webElement.findElement(By.className("js-job-link")).getAttribute("href");
             WebElement jobMode = webElement.findElement(By.cssSelector("ul"));
             String jobName = webElement.getAttribute("data-job-name");
             String jobCompanyName = webElement.getAttribute("data-cust-name");
             String jobArea = jobMode.findElement(By.className(JOB_MODE + "area")).getText();
+            String companyUrl = jobMode.findElement(By.className(JOB_MODE + "company")).findElement(By.tagName("a")).getAttribute("href");
 
             if (jobPatten.matcher(jobName).find()) {
                 log.debug("exclude jobName: {}", jobName);
@@ -228,7 +220,12 @@ public class ProcessJobInfoServiceImpl implements ProcessJobInfoService {
 
                 Optional<Company> first = companyList.stream().filter(company -> company.getCompanyName().equals(jobCompanyName)).findFirst();
                 if (first.isPresent()) {
-                    job.setCompany(first.get());
+                    Company company = first.get();
+                    job.setCompany(company);
+                    if (StringUtils.isBlank(company.getCompanyUrl())) {
+                        company.setCompanyUrl(companyUrl);
+                        companyRepository.save(company);
+                    }
                 } else {
                     Company company = new Company();
                     company.setCompanyName(jobCompanyName);
@@ -273,7 +270,12 @@ public class ProcessJobInfoServiceImpl implements ProcessJobInfoService {
             jobLocation = parent.getText();
             jobUpdateDateStr = headlessDriver.findElementByClassName("job-header__title").findElement(By.className("text-gray-darker")).findElement(By.tagName("span")).getText();
         } catch (NoSuchElementException e) {
-            log.error(String.format("can't find content, url:%s", url), e);
+            String errorMsg = e.getMessage();
+            if (headlessDriver.getTitle().contains("職缺已關閉")) {
+                errorMsg = "職缺已關閉";
+                job.setStatus(JobStatus.DELETED);
+            }
+            log.error("can't find content, url:{}, reason: {}", url, errorMsg, e);
         }
 
         if (jobSalary.startsWith("月薪") || jobSalary.startsWith("年薪")) {

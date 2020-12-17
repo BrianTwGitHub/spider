@@ -27,6 +27,9 @@ public class Company implements Serializable {
     @Column(name = "company_name", unique = true)
     private String companyName;
 
+    @Column(name = "company_url")
+    private String companyUrl;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private JobStatus status;

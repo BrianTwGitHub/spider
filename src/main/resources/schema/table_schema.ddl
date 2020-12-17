@@ -27,6 +27,7 @@ DROP TABLE IF EXISTS `company`;
 CREATE TABLE `company` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `company_name` varchar(200) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `company_url` varchar(200) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `status` enum('ACTIVATED','DISABLED','DELETED') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'ACTIVATED',
   `create_date` datetime NOT NULL,
   PRIMARY KEY (`id`),
