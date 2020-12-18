@@ -60,7 +60,7 @@ public class ProcessJobInfoServiceImpl implements ProcessJobInfoService {
     @Override
     @Transactional
     public List<JobInfo> processJobs(Integer effectiveDays) {
-        ChromeDriver driver = new ChromeDriver();
+        ChromeDriver driver = new ChromeDriver(new ChromeOptions().addArguments("--no-sandbox"));
         try {
             UriComponents uriComponents = UriComponentsBuilder
                     .fromPath("https://www.104.com.tw/jobs/search/")
@@ -168,82 +168,86 @@ public class ProcessJobInfoServiceImpl implements ProcessJobInfoService {
 
         Map<String, Integer> excludeCount = new HashMap<>();
 
-        ChromeDriver headlessDriver = new ChromeDriver(new ChromeOptions().setHeadless(true));
-        for (WebElement webElement : jobList) {
-            String href = webElement.findElement(By.className("js-job-link")).getAttribute("href");
-            WebElement jobMode = webElement.findElement(By.cssSelector("ul"));
-            String jobName = webElement.getAttribute("data-job-name");
-            String jobCompanyName = webElement.getAttribute("data-cust-name");
-            String jobArea = jobMode.findElement(By.className(JOB_MODE + "area")).getText();
-            String companyUrl = jobMode.findElement(By.className(JOB_MODE + "company")).findElement(By.tagName("a")).getAttribute("href");
+        ChromeDriver headlessDriver = new ChromeDriver(new ChromeOptions().setHeadless(true).addArguments("--no-sandbox"));
+        try {
+            for (WebElement webElement : jobList) {
+                String href = webElement.findElement(By.className("js-job-link")).getAttribute("href");
+                WebElement jobMode = webElement.findElement(By.cssSelector("ul"));
+                String jobName = webElement.getAttribute("data-job-name");
+                String jobCompanyName = webElement.getAttribute("data-cust-name");
+                String jobArea = jobMode.findElement(By.className(JOB_MODE + "area")).getText();
+                String companyUrl = jobMode.findElement(By.className(JOB_MODE + "company")).findElement(By.tagName("a")).getAttribute("href");
 
-            if (jobPatten.matcher(jobName).find()) {
-                log.debug("exclude jobName: {}", jobName);
-                excludeCount.merge("jobName", 1, Integer::sum);
-                continue;
-            }
-
-            if (companyPatten.matcher(jobCompanyName).find()) {
-                log.debug("exclude jobCompanyName: {}", jobCompanyName);
-                excludeCount.merge("jobCompanyName", 1, Integer::sum);
-                continue;
-            }
-
-            if (areaPatten.matcher(jobArea).find()) {
-                log.debug("exclude jobArea: {}", jobArea);
-                excludeCount.merge("jobArea", 1, Integer::sum);
-                continue;
-            }
-
-            Optional<Job> jobOptional = jobRepository.findJobByJobNameAndCompany_CompanyName(jobName, jobCompanyName);
-            boolean oldJob = jobOptional.isPresent();
-            Job job;
-            if (oldJob) {
-                job = jobOptional.get();
-            } else {
-                job = new Job();
-                job.setJobName(jobName);
-                job.setJobUrl(href);
-                job.setStatus(JobStatus.ACTIVATED);
-
-                Optional<Area> areaOptional = areaList.stream().filter(area -> area.getAreaName().equals(jobArea)).findFirst();
-                if (areaOptional.isPresent()) {
-                    job.setArea(areaOptional.get());
-                } else {
-                    Area area = new Area();
-                    area.setAreaName(jobArea);
-                    area.setStatus(JobStatus.ACTIVATED);
-                    area = areaRepository.save(area);
-                    job.setArea(area);
-                    areaList.add(area);
+                if (jobPatten.matcher(jobName).find()) {
+                    log.debug("exclude jobName: {}", jobName);
+                    excludeCount.merge("jobName", 1, Integer::sum);
+                    continue;
                 }
 
-                Optional<Company> first = companyList.stream().filter(company -> company.getCompanyName().equals(jobCompanyName)).findFirst();
-                if (first.isPresent()) {
-                    Company company = first.get();
-                    job.setCompany(company);
-                    if (StringUtils.isBlank(company.getCompanyUrl())) {
-                        company.setCompanyUrl(companyUrl);
-                        companyRepository.save(company);
+                if (companyPatten.matcher(jobCompanyName).find()) {
+                    log.debug("exclude jobCompanyName: {}", jobCompanyName);
+                    excludeCount.merge("jobCompanyName", 1, Integer::sum);
+                    continue;
+                }
+
+                if (areaPatten.matcher(jobArea).find()) {
+                    log.debug("exclude jobArea: {}", jobArea);
+                    excludeCount.merge("jobArea", 1, Integer::sum);
+                    continue;
+                }
+
+                Optional<Job> jobOptional = jobRepository.findJobByJobNameAndCompany_CompanyName(jobName, jobCompanyName);
+                boolean oldJob = jobOptional.isPresent();
+                Job job;
+                if (oldJob) {
+                    job = jobOptional.get();
+                } else {
+                    job = new Job();
+                    job.setJobName(jobName);
+                    job.setJobUrl(href);
+                    job.setStatus(JobStatus.ACTIVATED);
+
+                    Optional<Area> areaOptional = areaList.stream().filter(area -> area.getAreaName().equals(jobArea)).findFirst();
+                    if (areaOptional.isPresent()) {
+                        job.setArea(areaOptional.get());
+                    } else {
+                        Area area = new Area();
+                        area.setAreaName(jobArea);
+                        area.setStatus(JobStatus.ACTIVATED);
+                        area = areaRepository.save(area);
+                        job.setArea(area);
+                        areaList.add(area);
                     }
-                } else {
-                    Company company = new Company();
-                    company.setCompanyName(jobCompanyName);
-                    company.setStatus(JobStatus.ACTIVATED);
-                    company = companyRepository.save(company);
-                    job.setCompany(company);
-                    companyList.add(company);
+
+                    Optional<Company> first = companyList.stream().filter(company -> company.getCompanyName().equals(jobCompanyName)).findFirst();
+                    if (first.isPresent()) {
+                        Company company = first.get();
+                        job.setCompany(company);
+                        if (StringUtils.isBlank(company.getCompanyUrl())) {
+                            company.setCompanyUrl(companyUrl);
+                            companyRepository.save(company);
+                        }
+                    } else {
+                        Company company = new Company();
+                        company.setCompanyName(jobCompanyName);
+                        company.setStatus(JobStatus.ACTIVATED);
+                        company = companyRepository.save(company);
+                        job.setCompany(company);
+                        companyList.add(company);
+                    }
                 }
+
+                log.info("get job: " + jobName + " company: " + jobCompanyName);
+
+                JobInfo jobInfo = new JobInfo();
+                jobInfo.setJobName(jobName);
+                jobInfo.setJobCompany(jobCompanyName);
+                jobInfo.setJobArea(jobArea);
+                jobInfo.setJobUrl(href);
+                jobInfos.add(getJobInfo(job, jobInfo, href, headlessDriver, oldJob));
             }
-
-            log.info("get job: " + jobName + " company: " + jobCompanyName);
-
-            JobInfo jobInfo = new JobInfo();
-            jobInfo.setJobName(jobName);
-            jobInfo.setJobCompany(jobCompanyName);
-            jobInfo.setJobArea(jobArea);
-            jobInfo.setJobUrl(href);
-            jobInfos.add(getJobInfo(job, jobInfo, href, headlessDriver, oldJob));
+        } finally {
+            headlessDriver.quit();
         }
         log.info("共有 {} 筆資料", jobList.size());
         log.info("有效筆數 :{}", jobInfos.size());

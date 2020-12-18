@@ -77,7 +77,7 @@ public class JobServiceImpl implements JobService {
     @Override
     @Transactional
     public JobInfo reload(Integer jobId) {
-        ChromeDriver chromeDriver = new ChromeDriver(new ChromeOptions().setHeadless(true));
+        ChromeDriver chromeDriver = new ChromeDriver(new ChromeOptions().setHeadless(true).addArguments("--no-sandbox"));
         try {
             Job job = jobRepository.findById(jobId).orElseThrow(() -> new IllegalArgumentException("Job not found, id:" + jobId));
             JobInfo jobInfo = new JobInfo();
@@ -107,7 +107,7 @@ public class JobServiceImpl implements JobService {
                 return Collections.emptyList();
 
             }
-            chromeDriver = new ChromeDriver(new ChromeOptions().setHeadless(true));
+            chromeDriver = new ChromeDriver(new ChromeOptions().setHeadless(true).addArguments("--no-sandbox"));
 
             List<JobInfo> jobInfoList = new ArrayList<>();
             for (Job job : iterable) {
@@ -182,7 +182,7 @@ public class JobServiceImpl implements JobService {
             QCompany qCompany = QCompany.company;
             Iterable<Company> companies = companyRepository.findAll(qCompany.companyUrl.isNull());
             if (companies.iterator().hasNext()) {
-                chromeDriver = new ChromeDriver(new ChromeOptions().setHeadless(true));
+                chromeDriver = new ChromeDriver(new ChromeOptions().setHeadless(true).addArguments("--no-sandbox"));
                 for (Company company : companies) {
                     Job job = company.getJobs().get(0);
                     if (JobStatus.DELETED != job.getStatus()) {
