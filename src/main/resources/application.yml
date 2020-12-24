@@ -55,6 +55,9 @@ demo:
       wage: 1_000_000
 
 logging:
+  file:
+    path: ./log/
+    name: spider.log
   level:
     com:
       youlin:
