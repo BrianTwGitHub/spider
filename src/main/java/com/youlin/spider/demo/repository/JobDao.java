@@ -1,7 +1,7 @@
 package com.youlin.spider.demo.repository;
 
 import com.youlin.spider.demo.entity.Job;
-import com.youlin.spider.demo.enums.JobStatus;
+import com.youlin.spider.demo.enums.StatusType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -15,11 +15,11 @@ public interface JobDao {
      * @param jobAreaIds
      * @param companyName
      * @param jobContent
-     * @param jobStatus
+     * @param statusType
      * @param isRead
      * @param isFavorite
      * @param pageable
      * @return
      */
-    Page<Job> findJobByCondition(String jobName, List<Integer> jobAreaIds, String companyName, String jobContent, JobStatus jobStatus, Boolean isRead, Boolean isFavorite, Pageable pageable);
+    Page<Job> findJobByCondition(String jobName, List<Integer> jobAreaIds, String companyName, String jobContent, StatusType statusType, Boolean isRead, Boolean isFavorite, Pageable pageable);
 }

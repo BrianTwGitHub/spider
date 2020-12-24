@@ -1,6 +1,6 @@
 package com.youlin.spider.demo.entity;
 
-import com.youlin.spider.demo.enums.JobStatus;
+import com.youlin.spider.demo.enums.StatusType;
 import lombok.Data;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -58,7 +58,7 @@ public class Job implements Serializable {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
-    private JobStatus status;
+    private StatusType status;
 
     @CreatedDate
     @Temporal(TemporalType.TIMESTAMP)

@@ -21,6 +21,26 @@ USE `demo`;
 -- Table structure for table `company`
 --
 
+DROP TABLE IF EXISTS `filter`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `filter` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `filter_name` varchar(200) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `filter_type` enum('COMPANY_NAME','JOB_NAME','AREA_NAME') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'COMPANY_NAME',
+  `status` enum('ACTIVATED','DISABLED','DELETED') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'ACTIVATED',
+  `create_date` datetime NOT NULL,
+  `modify_date` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `id_UNIQUE` (`id`),
+  UNIQUE KEY `filter_UNIQUE` (`filter_name`, `filter_type`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `company`
+--
+
 DROP TABLE IF EXISTS `company`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;

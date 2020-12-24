@@ -1,21 +1,21 @@
 package com.youlin.spider.demo.entity;
 
+import com.youlin.spider.demo.enums.FilterType;
 import com.youlin.spider.demo.enums.StatusType;
 import lombok.Data;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import javax.persistence.*;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
-@Table(name = "company")
+@Table(name = "filter")
 @Entity
 @Data
 @EntityListeners(AuditingEntityListener.class)
-public class Company implements Serializable {
+public class Filter implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -24,11 +24,12 @@ public class Company implements Serializable {
     @Column(name = "id", nullable = false)
     private Integer id;
 
-    @Column(name = "company_name", unique = true)
-    private String companyName;
+    @Column(name = "filter_name", unique = true)
+    private String filterName;
 
-    @Column(name = "company_url")
-    private String companyUrl;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "filter_type", nullable = false)
+    private FilterType filterType;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
@@ -39,6 +40,8 @@ public class Company implements Serializable {
     @Column(name = "create_date", nullable = false)
     private Date createDate;
 
-    @OneToMany(mappedBy = "company")
-    private List<Job> jobs = new ArrayList<>();
+    @LastModifiedDate
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "modify_date")
+    private Date modifyDate;
 }

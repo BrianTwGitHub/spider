@@ -1,11 +1,10 @@
 package com.youlin.spider.demo.service.impl;
 
-import com.youlin.spider.demo.entity.Area;
-import com.youlin.spider.demo.entity.Company;
-import com.youlin.spider.demo.entity.Job;
-import com.youlin.spider.demo.enums.JobStatus;
+import com.youlin.spider.demo.entity.*;
+import com.youlin.spider.demo.enums.StatusType;
 import com.youlin.spider.demo.repository.AreaRepository;
 import com.youlin.spider.demo.repository.CompanyRepository;
+import com.youlin.spider.demo.repository.FilterRepository;
 import com.youlin.spider.demo.repository.JobRepository;
 import com.youlin.spider.demo.service.ProcessJobInfoService;
 import com.youlin.spider.demo.utils.DateUtils;
@@ -38,15 +37,6 @@ import java.util.regex.Pattern;
 @RequiredArgsConstructor
 public class ProcessJobInfoServiceImpl implements ProcessJobInfoService {
 
-    @Value("#{'${demo.exclude.company.names.keyword:none}'.split(',')}")
-    private List<String> excludeCompanyNameKeyWordList;
-
-    @Value("#{'${demo.exclude.job.names.keyword:none}'.split(',')}")
-    private List<String> excludeJobKeyWordList;
-
-    @Value("#{'${demo.exclude.area.names.keyword:none}'.split(',')}")
-    private List<String> excludeAreaKeyWordList;
-
     @Value("${demo.monthly.minimum.wage:40000}")
     private Integer monthlyMinimumWage;
 
@@ -56,6 +46,7 @@ public class ProcessJobInfoServiceImpl implements ProcessJobInfoService {
     private final JobRepository jobRepository;
     private final CompanyRepository companyRepository;
     private final AreaRepository areaRepository;
+    private final FilterRepository filterRepository;
 
     @Override
     @Transactional
@@ -156,6 +147,23 @@ public class ProcessJobInfoServiceImpl implements ProcessJobInfoService {
      */
     private List<JobInfo> saveJob(ChromeDriver driver) throws Exception {
         List<JobInfo> jobInfos = new ArrayList<>();
+        List<String> excludeJobKeyWordList = new ArrayList<>();
+        List<String> excludeCompanyNameKeyWordList = new ArrayList<>();
+        List<String> excludeAreaKeyWordList = new ArrayList<>();
+        Iterable<Filter> filters = filterRepository.findAll(QFilter.filter.status.ne(StatusType.DELETED));
+        for (Filter filter : filters) {
+            switch (filter.getFilterType()) {
+                case COMPANY_NAME:
+                    excludeCompanyNameKeyWordList.add(filter.getFilterName());
+                    break;
+                case JOB_NAME:
+                    excludeJobKeyWordList.add(filter.getFilterName());
+                    break;
+                case AREA_NAME:
+                    excludeAreaKeyWordList.add(filter.getFilterName());
+                    break;
+            }
+        }
         Pattern jobPatten = Pattern.compile(String.join("|", excludeJobKeyWordList), Pattern.CASE_INSENSITIVE);
         Pattern companyPatten = Pattern.compile(String.join("|", excludeCompanyNameKeyWordList), Pattern.CASE_INSENSITIVE);
         Pattern areaPatten = Pattern.compile(String.join("|", excludeAreaKeyWordList), Pattern.CASE_INSENSITIVE);
@@ -205,7 +213,7 @@ public class ProcessJobInfoServiceImpl implements ProcessJobInfoService {
                     job = new Job();
                     job.setJobName(jobName);
                     job.setJobUrl(href);
-                    job.setStatus(JobStatus.ACTIVATED);
+                    job.setStatus(StatusType.ACTIVATED);
 
                     Optional<Area> areaOptional = areaList.stream().filter(area -> area.getAreaName().equals(jobArea)).findFirst();
                     if (areaOptional.isPresent()) {
@@ -213,7 +221,7 @@ public class ProcessJobInfoServiceImpl implements ProcessJobInfoService {
                     } else {
                         Area area = new Area();
                         area.setAreaName(jobArea);
-                        area.setStatus(JobStatus.ACTIVATED);
+                        area.setStatus(StatusType.ACTIVATED);
                         area = areaRepository.save(area);
                         job.setArea(area);
                         areaList.add(area);
@@ -230,7 +238,7 @@ public class ProcessJobInfoServiceImpl implements ProcessJobInfoService {
                     } else {
                         Company company = new Company();
                         company.setCompanyName(jobCompanyName);
-                        company.setStatus(JobStatus.ACTIVATED);
+                        company.setStatus(StatusType.ACTIVATED);
                         company = companyRepository.save(company);
                         job.setCompany(company);
                         companyList.add(company);
@@ -277,7 +285,7 @@ public class ProcessJobInfoServiceImpl implements ProcessJobInfoService {
             String errorMsg = e.getMessage();
             if (headlessDriver.getTitle().contains("職缺已關閉")) {
                 errorMsg = "職缺已關閉";
-                job.setStatus(JobStatus.DELETED);
+                job.setStatus(StatusType.DELETED);
             }
             log.error("can't find content, url:{}, reason: {}", url, errorMsg, e);
         }
@@ -294,7 +302,7 @@ public class ProcessJobInfoServiceImpl implements ProcessJobInfoService {
                 }
             }
             if (!enoughSalary) {
-                job.setStatus(JobStatus.DELETED);
+                job.setStatus(StatusType.DELETED);
             }
         }
         job.setJobLocation(jobLocation);

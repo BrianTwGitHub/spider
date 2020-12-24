@@ -17,22 +17,6 @@ Project is created with:
 * QueryDsl version: 4.4.0
 * Maven version: 3.6.3
 
-## Properties
-
-```
-demo:
-  exclude:
-    company:
-      names:
-        keyword: // exclude company name, split by ','
-    job:
-      names:
-        keyword: // exclude job name, split by ',', for example: PHP
-    area:
-      names:
-        keyword: // exclude area name, split by ',', for example: Taipei
-```
-
 ## Running the Samples From the Command Line
 To run this project:
 

@@ -4,7 +4,7 @@ import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
 import com.youlin.spider.demo.entity.Job;
 import com.youlin.spider.demo.entity.QJob;
-import com.youlin.spider.demo.enums.JobStatus;
+import com.youlin.spider.demo.enums.StatusType;
 import com.youlin.spider.demo.repository.JobDao;
 import com.youlin.spider.demo.repository.JobRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +28,7 @@ public class JobDaoImpl implements JobDao {
     private final JobRepository jobRepository;
 
     @Override
-    public Page<Job> findJobByCondition(String jobName, List<Integer> jobAreaIds, String companyName, String jobContent, JobStatus jobStatus, Boolean isRead, Boolean isFavorite, Pageable pageable) {
+    public Page<Job> findJobByCondition(String jobName, List<Integer> jobAreaIds, String companyName, String jobContent, StatusType statusType, Boolean isRead, Boolean isFavorite, Pageable pageable) {
         QJob qJob = QJob.job;
 
         BooleanExpression conditions = Expressions.asBoolean(true).isTrue();
@@ -49,9 +49,11 @@ public class JobDaoImpl implements JobDao {
             conditions = conditions.and(qJob.jobContent.containsIgnoreCase(jobContent));
         }
 
-        if (jobStatus != null) {
-            conditions = conditions.and(qJob.status.ne(JobStatus.DELETED));
+        if (statusType != null) {
+            conditions = conditions.and(qJob.status.eq(statusType));
         }
+
+        conditions = conditions.and(qJob.status.ne(StatusType.DELETED));
 
         if (isRead != null) {
             conditions = conditions.and(qJob.isRead.eq(isRead));

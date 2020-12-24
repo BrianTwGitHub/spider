@@ -1,7 +1,7 @@
 package com.youlin.spider.demo.service.impl;
 
 import com.youlin.spider.demo.entity.*;
-import com.youlin.spider.demo.enums.JobStatus;
+import com.youlin.spider.demo.enums.StatusType;
 import com.youlin.spider.demo.repository.AreaRepository;
 import com.youlin.spider.demo.repository.CompanyRepository;
 import com.youlin.spider.demo.repository.JobDao;
@@ -43,7 +43,7 @@ public class JobServiceImpl implements JobService {
 
     @Override
     public Page<JobInfo> getJobs(String jobName, List<Integer> jobAreaIds, String companyName, String jobContent, Boolean isRead, Boolean isFavorite, Pageable pageable) {
-        Page<Job> jobByJobNameLike = jobDao.findJobByCondition(jobName, jobAreaIds, companyName, jobContent, JobStatus.DELETED, isRead, isFavorite, pageable);
+        Page<Job> jobByJobNameLike = jobDao.findJobByCondition(jobName, jobAreaIds, companyName, jobContent, null, isRead, isFavorite, pageable);
         if (!jobByJobNameLike.isEmpty()) {
             List<Area> areaList = areaRepository.findAll();
             List<Company> companyList = companyRepository.findAll();
@@ -102,7 +102,7 @@ public class JobServiceImpl implements JobService {
         ChromeDriver chromeDriver = null;
         try {
             QJob qJob = QJob.job;
-            Iterable<Job> iterable = jobRepository.findAll(qJob.status.ne(JobStatus.DELETED).and(qJob.jobContent.eq("").or(qJob.jobUpdateDate.isNull())));
+            Iterable<Job> iterable = jobRepository.findAll(qJob.status.ne(StatusType.DELETED).and(qJob.jobContent.eq("").or(qJob.jobUpdateDate.isNull())));
             if (!iterable.iterator().hasNext()) {
                 return Collections.emptyList();
 
@@ -133,7 +133,7 @@ public class JobServiceImpl implements JobService {
     @Override
     public List<JobArea> getJobAreaList() {
         QArea condition = QArea.area;
-        Iterable<Area> iterable = areaRepository.findAll(condition.status.ne(JobStatus.DELETED));
+        Iterable<Area> iterable = areaRepository.findAll(condition.status.ne(StatusType.DELETED));
         if (!iterable.iterator().hasNext()) {
             return Collections.emptyList();
 
@@ -185,7 +185,7 @@ public class JobServiceImpl implements JobService {
                 chromeDriver = new ChromeDriver(new ChromeOptions().setHeadless(true).addArguments("--no-sandbox"));
                 for (Company company : companies) {
                     Job job = company.getJobs().get(0);
-                    if (JobStatus.DELETED != job.getStatus()) {
+                    if (StatusType.DELETED != job.getStatus()) {
                         String jobUrl = company.getJobs().get(0).getJobUrl();
                         chromeDriver.get(jobUrl);
                         try {
