@@ -9,7 +9,6 @@ import com.youlin.spider.demo.repository.JobRepository;
 import com.youlin.spider.demo.service.ProcessJobInfoService;
 import com.youlin.spider.demo.utils.DateUtils;
 import com.youlin.spider.demo.vo.JobInfo;
-import io.micrometer.core.instrument.util.StringUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.By;
@@ -25,6 +24,7 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -56,7 +56,8 @@ public class ProcessJobInfoServiceImpl implements ProcessJobInfoService {
             UriComponents uriComponents = UriComponentsBuilder
                     .fromPath("https://www.104.com.tw/jobs/search/")
                     .queryParam("ro", "1") // 限定全職的工作
-                    .queryParam("keyword", "Java") // 關鍵字
+                    .queryParam("jobcat", "2007000000") // 限定職物類別：資訊軟體系統類
+                    .queryParam("keyword", "Java 系統分析 analysis") // 關鍵字
                     .queryParam("area", "6001001000,6001002000") // 限定在 6001001000 台北, 6001002000 新北的工作
                     .queryParam("isnew", effectiveDays) // 最近一個月有更新的過的職缺
                     .queryParam("mode", "l") // 清單的瀏覽模式
@@ -76,9 +77,13 @@ public class ProcessJobInfoServiceImpl implements ProcessJobInfoService {
             log.info("total pages: " + totalPage);
 
             // 104 滑動到下方時，會自動加載新資料，在這裡透過程式送出 javascript 語法幫我們執行「滑到最下方」的動作
-            for (int i = 0; i < 20; i++) {
+            for (int i = 0; i < 30; i++) {
                 driver.executeScript("window.scrollTo(0, document.body.scrollHeight);");
                 Thread.sleep(600);
+                List<WebElement> nextPageElements = driver.findElementsByClassName("js-more-page");
+                if (nextPageElements.size() == 1) {
+                    break;
+                }
             }
 
             loadMorePages(driver, defaultPage, totalPage);
@@ -231,7 +236,7 @@ public class ProcessJobInfoServiceImpl implements ProcessJobInfoService {
                     if (first.isPresent()) {
                         Company company = first.get();
                         job.setCompany(company);
-                        if (StringUtils.isBlank(company.getCompanyUrl())) {
+                        if (!StringUtils.hasLength(company.getCompanyUrl())) {
                             company.setCompanyUrl(companyUrl);
                             companyRepository.save(company);
                         }
@@ -277,6 +282,14 @@ public class ProcessJobInfoServiceImpl implements ProcessJobInfoService {
         String jobUpdateDateStr = "";
         try {
             jobContent = headlessDriver.findElementByClassName("job-description__content").getText();
+            try {
+                String p = headlessDriver.findElementsByClassName("job-requirement-table__data").get(7).findElement(By.tagName("p")).getText();
+                if (StringUtils.hasLength(p)) {
+                    jobContent = jobContent + "\n\n其他條件:\n" + p;
+                }
+            } catch (Exception se) {
+                // do nothing
+            }
             jobSalary = headlessDriver.findElementByClassName("monthly-salary").getText();
             WebElement parent = headlessDriver.findElementByClassName("jb_icon_location").findElement(By.xpath("./.."));
             jobLocation = parent.getText();
@@ -315,7 +328,7 @@ public class ProcessJobInfoServiceImpl implements ProcessJobInfoService {
                 updateJob = true;
             }
 
-            if (StringUtils.isNotBlank(jobUpdateDateStr)) {
+            if (StringUtils.hasLength(jobUpdateDateStr)) {
                 Date jobUpdateDate = DateUtils.parseUpdateDate(jobUpdateDateStr);
                 if (job.getJobUpdateDate() == null ||
                         (job.getJobUpdateDate() != null && job.getJobUpdateDate().getTime() + (7 * 24 * 60 * 60 * 1000) < jobUpdateDate.getTime())) {

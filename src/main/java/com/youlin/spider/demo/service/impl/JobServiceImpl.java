@@ -102,19 +102,20 @@ public class JobServiceImpl implements JobService {
         ChromeDriver chromeDriver = null;
         try {
             QJob qJob = QJob.job;
-            Iterable<Job> iterable = jobRepository.findAll(qJob.status.ne(StatusType.DELETED).and(qJob.jobContent.eq("").or(qJob.jobUpdateDate.isNull())));
+            Iterable<Job> iterable = jobRepository.findAll(qJob.status.ne(StatusType.DELETED).and(qJob.jobContent.isEmpty().or(qJob.jobUpdateDate.isNull())));
             if (!iterable.iterator().hasNext()) {
                 return Collections.emptyList();
 
             }
             chromeDriver = new ChromeDriver(new ChromeOptions().setHeadless(true).addArguments("--no-sandbox"));
-
+            List<Area> areas = areaRepository.findAll();
+            List<Company> companies = companyRepository.findAll();
             List<JobInfo> jobInfoList = new ArrayList<>();
             for (Job job : iterable) {
                 JobInfo jobInfo = new JobInfo();
                 jobInfo.setJobName(job.getJobName());
-                jobInfo.setJobCompany(job.getCompany().getCompanyName());
-                jobInfo.setJobArea(job.getArea().getAreaName());
+                jobInfo.setJobCompany(companies.stream().filter(company -> company.getId().equals(job.getCompany().getId())).findFirst().orElseThrow().getCompanyName());
+                jobInfo.setJobArea(areas.stream().filter(area -> area.getId().equals(job.getArea().getId())).findFirst().orElseThrow().getAreaName());
                 jobInfo.setJobUrl(job.getJobUrl());
                 processJobInfoService.getJobInfo(job, jobInfo, job.getJobUrl(), chromeDriver, true);
                 jobInfoList.add(jobInfo);
