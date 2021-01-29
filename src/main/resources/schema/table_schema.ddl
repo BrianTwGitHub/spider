@@ -73,6 +73,25 @@ CREATE TABLE `area` (
   UNIQUE KEY `area_name_UNIQUE` (`area_name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Table structure for table `area`
+--
+
+DROP TABLE IF EXISTS `user`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `user` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_name` varchar(200) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `job_category` varchar(200) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `keyword` varchar(200) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `status` enum('ACTIVATED','DISABLED','DELETED') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'ACTIVATED',
+  `create_date` datetime NOT NULL,
+  `modify_date` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `id_UNIQUE` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 DROP TABLE IF EXISTS `job`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
@@ -85,6 +104,7 @@ CREATE TABLE `job` (
   `job_url` varchar(200) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `job_company_id` int(11) NOT NULL,
   `job_area_id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
   `is_read` tinyint(4) NOT NULL DEFAULT '0',
   `is_favorite` tinyint(4) NOT NULL DEFAULT '0',
   `job_update_date` datetime DEFAULT NULL,

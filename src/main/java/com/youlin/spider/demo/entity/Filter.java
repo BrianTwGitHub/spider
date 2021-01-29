@@ -31,6 +31,9 @@ public class Filter implements Serializable {
     @Column(name = "filter_type", nullable = false)
     private FilterType filterType;
 
+    @Column(name = "user_id")
+    private Integer userId;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private StatusType status;

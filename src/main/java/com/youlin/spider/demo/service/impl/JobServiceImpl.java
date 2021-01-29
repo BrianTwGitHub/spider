@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -42,8 +43,8 @@ public class JobServiceImpl implements JobService {
     private final ProcessJobInfoService processJobInfoService;
 
     @Override
-    public Page<JobInfo> getJobs(String jobName, List<Integer> jobAreaIds, String companyName, String jobContent, Boolean isRead, Boolean isFavorite, Pageable pageable) {
-        Page<Job> jobByJobNameLike = jobDao.findJobByCondition(jobName, jobAreaIds, companyName, jobContent, null, isRead, isFavorite, pageable);
+    public Page<JobInfo> getJobs(Integer userId, String jobName, List<Integer> jobAreaIds, String companyName, String jobContent, Boolean isRead, Boolean isFavorite, Pageable pageable) {
+        Page<Job> jobByJobNameLike = jobDao.findJobByCondition(userId, jobName, jobAreaIds, companyName, jobContent, null, isRead, isFavorite, pageable);
         if (!jobByJobNameLike.isEmpty()) {
             List<Area> areaList = areaRepository.findAll();
             List<Company> companyList = companyRepository.findAll();
@@ -141,7 +142,7 @@ public class JobServiceImpl implements JobService {
         }
         List<Area> result = new ArrayList<>();
         iterable.forEach(result::add);
-        return result.stream().map(area -> new JobArea(area.getId(), area.getAreaName())).collect(Collectors.toList());
+        return result.stream().sorted(Comparator.comparing(Area::getAreaName)).map(area -> new JobArea(area.getId(), area.getAreaName())).collect(Collectors.toList());
     }
 
     /**

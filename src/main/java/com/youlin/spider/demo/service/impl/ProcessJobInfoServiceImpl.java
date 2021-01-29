@@ -2,10 +2,7 @@ package com.youlin.spider.demo.service.impl;
 
 import com.youlin.spider.demo.entity.*;
 import com.youlin.spider.demo.enums.StatusType;
-import com.youlin.spider.demo.repository.AreaRepository;
-import com.youlin.spider.demo.repository.CompanyRepository;
-import com.youlin.spider.demo.repository.FilterRepository;
-import com.youlin.spider.demo.repository.JobRepository;
+import com.youlin.spider.demo.repository.*;
 import com.youlin.spider.demo.service.ProcessJobInfoService;
 import com.youlin.spider.demo.utils.DateUtils;
 import com.youlin.spider.demo.vo.JobInfo;
@@ -47,17 +44,20 @@ public class ProcessJobInfoServiceImpl implements ProcessJobInfoService {
     private final CompanyRepository companyRepository;
     private final AreaRepository areaRepository;
     private final FilterRepository filterRepository;
+    private final UserRepository userRepository;
 
     @Override
     @Transactional
-    public List<JobInfo> processJobs(Integer effectiveDays) {
+    public List<JobInfo> processJobs(Integer effectiveDays, Integer userId) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("user id not exists: " + userId));
+
         ChromeDriver driver = new ChromeDriver(new ChromeOptions().addArguments("--no-sandbox"));
         try {
             UriComponents uriComponents = UriComponentsBuilder
                     .fromPath("https://www.104.com.tw/jobs/search/")
                     .queryParam("ro", "1") // 限定全職的工作
-                    .queryParam("jobcat", "2007000000") // 限定職物類別：資訊軟體系統類
-                    .queryParam("keyword", "Java 系統分析 analysis") // 關鍵字
+                    .queryParam("jobcat", user.getJobCategory()) // 限定職物類別：資訊軟體系統類
+                    .queryParam("keyword", user.getKeyword()) // 關鍵字
                     .queryParam("area", "6001001000,6001002000") // 限定在 6001001000 台北, 6001002000 新北的工作
                     .queryParam("isnew", effectiveDays) // 最近一個月有更新的過的職缺
                     .queryParam("mode", "l") // 清單的瀏覽模式
@@ -88,7 +88,7 @@ public class ProcessJobInfoServiceImpl implements ProcessJobInfoService {
 
             loadMorePages(driver, defaultPage, totalPage);
 
-            return saveJob(driver);
+            return saveJob(driver, userId);
         } catch (Exception e) {
             log.error("", e);
             throw new RuntimeException(e);
@@ -150,12 +150,12 @@ public class ProcessJobInfoServiceImpl implements ProcessJobInfoService {
      * @throws IOException
      * @throws InterruptedException
      */
-    private List<JobInfo> saveJob(ChromeDriver driver) throws Exception {
+    private List<JobInfo> saveJob(ChromeDriver driver, Integer userId) throws Exception {
         List<JobInfo> jobInfos = new ArrayList<>();
         List<String> excludeJobKeyWordList = new ArrayList<>();
         List<String> excludeCompanyNameKeyWordList = new ArrayList<>();
         List<String> excludeAreaKeyWordList = new ArrayList<>();
-        Iterable<Filter> filters = filterRepository.findAll(QFilter.filter.status.ne(StatusType.DELETED));
+        Iterable<Filter> filters = filterRepository.findAll(QFilter.filter.status.ne(StatusType.DELETED).and(QFilter.filter.userId.eq(userId)));
         for (Filter filter : filters) {
             switch (filter.getFilterType()) {
                 case COMPANY_NAME:
@@ -216,6 +216,7 @@ public class ProcessJobInfoServiceImpl implements ProcessJobInfoService {
                     job = jobOptional.get();
                 } else {
                     job = new Job();
+                    job.setUserId(userId);
                     job.setJobName(jobName);
                     job.setJobUrl(href);
                     job.setStatus(StatusType.ACTIVATED);

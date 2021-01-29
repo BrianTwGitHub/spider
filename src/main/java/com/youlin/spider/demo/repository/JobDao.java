@@ -11,6 +11,7 @@ public interface JobDao {
     /**
      * 取得工作清單
      *
+     * @param userId
      * @param jobName
      * @param jobAreaIds
      * @param companyName
@@ -21,5 +22,5 @@ public interface JobDao {
      * @param pageable
      * @return
      */
-    Page<Job> findJobByCondition(String jobName, List<Integer> jobAreaIds, String companyName, String jobContent, StatusType statusType, Boolean isRead, Boolean isFavorite, Pageable pageable);
+    Page<Job> findJobByCondition(Integer userId, String jobName, List<Integer> jobAreaIds, String companyName, String jobContent, StatusType statusType, Boolean isRead, Boolean isFavorite, Pageable pageable);
 }

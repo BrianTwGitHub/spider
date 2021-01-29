@@ -22,14 +22,15 @@ public class JobController {
 
     @GetMapping("/")
     @ApiOperation("取得Job列表")
-    public ResponseEntity<Page<JobInfo>> getJobs(@RequestParam(required = false) String jobName,
+    public ResponseEntity<Page<JobInfo>> getJobs(@RequestParam(defaultValue = "1") Integer userId,
+                                                 @RequestParam(required = false) String jobName,
                                                  @RequestParam(required = false) List<Integer> jobAreaIds,
                                                  @RequestParam(required = false) String jobCompanyName,
                                                  @RequestParam(required = false) String jobContent,
                                                  @RequestParam(required = false) Boolean isRead,
                                                  @RequestParam(required = false) Boolean isFavorite,
                                                  @PageableDefault Pageable pageable) {
-        return ResponseEntity.ok().body(jobService.getJobs(jobName, jobAreaIds, jobCompanyName, jobContent, isRead, isFavorite, pageable));
+        return ResponseEntity.ok().body(jobService.getJobs(userId, jobName, jobAreaIds, jobCompanyName, jobContent, isRead, isFavorite, pageable));
     }
 
     @GetMapping("/area/list")

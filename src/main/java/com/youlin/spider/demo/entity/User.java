@@ -10,11 +10,11 @@ import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Date;
 
+@Table(name = "user")
 @Entity
-@Table(name = "job")
 @Data
 @EntityListeners(AuditingEntityListener.class)
-public class Job implements Serializable {
+public class User implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -23,41 +23,14 @@ public class Job implements Serializable {
     @Column(name = "id", nullable = false)
     private Integer id;
 
-    @Column(name = "job_name", nullable = false)
-    private String jobName;
+    @Column(name = "user_name", unique = true)
+    private String userName;
 
-    @Column(name = "job_content")
-    private String jobContent;
+    @Column(name = "job_category", unique = true)
+    private String jobCategory;
 
-    @Column(name = "job_salary")
-    private String jobSalary;
-
-    @Column(name = "job_location")
-    private String jobLocation;
-
-    @Column(name = "job_url")
-    private String jobUrl;
-
-    @Column(name = "is_read")
-    private boolean isRead;
-
-    @Column(name = "is_favorite")
-    private boolean isFavorite;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "job_company_id")
-    private Company company;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "job_area_id", nullable = false)
-    private Area area;
-
-    @Column(name = "user_id")
-    private Integer userId;
-
-    @Temporal(TemporalType.TIMESTAMP)
-    @Column(name = "job_update_date")
-    private Date jobUpdateDate;
+    @Column(name = "keyword", unique = true)
+    private String keyword;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
@@ -72,5 +45,4 @@ public class Job implements Serializable {
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "modify_date")
     private Date modifyDate;
-
 }

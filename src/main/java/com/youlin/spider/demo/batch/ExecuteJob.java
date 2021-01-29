@@ -18,7 +18,8 @@ public class ExecuteJob {
     @Scheduled(cron = "0 12 12 * * *")
     public void executeGetJobs() {
         log.info("run executeGetJobs");
-        List<JobInfo> jobInfos = processJobInfoService.processJobs(3);
+
+        List<JobInfo> jobInfos = processJobInfoService.processJobs(3, 1);
         log.info("total get jobs: {}", jobInfos.size());
     }
 }

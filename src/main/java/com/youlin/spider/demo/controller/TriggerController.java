@@ -19,6 +19,6 @@ public class TriggerController {
 
     @GetMapping("/jobs")
     public ResponseEntity<List<JobInfo>> processJobInfoList(@RequestParam(required = false, defaultValue = "1") Integer effectiveDays) {
-        return ResponseEntity.ok(processJobInfoService.processJobs(effectiveDays));
+        return ResponseEntity.ok(processJobInfoService.processJobs(effectiveDays, 1));
     }
 }
