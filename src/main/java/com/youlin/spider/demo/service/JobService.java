@@ -24,7 +24,7 @@ public interface JobService {
      * @param pageable
      * @return
      */
-    public Page<JobInfo> getJobs(Integer userId, String jobName, List<Integer> jobAreaIds, String companyName, String jobContent, Boolean isRead, Boolean isFavorite, Pageable pageable);
+    Page<JobInfo> getJobs(Integer userId, String jobName, List<Integer> jobAreaIds, String companyName, String jobContent, Boolean isRead, Boolean isFavorite, Pageable pageable);
 
     /**
      * 重新取得工作內容
@@ -32,38 +32,38 @@ public interface JobService {
      * @param jobId
      * @return
      */
-    public JobInfo reload(Integer jobId);
+    JobInfo reload(Integer jobId);
 
     /**
      * 重新取得工作內容
      *
      * @return
      */
-    public List<JobInfo> failedReload();
+    List<JobInfo> failedReload();
 
     /**
      * 取得所有工作地區
      *
      * @return
      */
-    public List<JobArea> getJobAreaList();
+    List<JobArea> getJobAreaList();
 
     /**
      * 設定Job已讀
      *
      * @param jobId
      */
-    public void readJob(Integer jobId);
+    void readJob(Integer jobId);
 
     /**
      * 加入/取消我的最愛
      *
      * @param jobId
      */
-    public boolean favoriteJob(Integer jobId);
+    boolean favoriteJob(Integer jobId);
 
     /**
      * 重新取得公司連結
      */
-    public void reloadCompanyUrl();
+    void reloadCompanyUrl();
 }
