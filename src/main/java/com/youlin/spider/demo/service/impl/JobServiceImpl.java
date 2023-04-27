@@ -103,7 +103,7 @@ public class JobServiceImpl implements JobService {
 	@Override
 	@Transactional
 	public List<JobInfo> failedReload() {
-		ChromeDriver chromeDriver = new ChromeDriver(new ChromeOptions().setHeadless(true).addArguments("--no-sandbox"));
+		ChromeDriver chromeDriver = new ChromeDriver(new ChromeOptions().addArguments("--no-sandbox", "--headless"));
 		try {
 			QJob qJob = QJob.job;
 			Iterable<Job> iterable = jobRepository.findAll(qJob.status.ne(StatusType.DELETED).and(qJob.jobContent.isEmpty().or(qJob.jobUpdateDate.isNull())));

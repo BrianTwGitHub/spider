@@ -6,12 +6,14 @@ import com.youlin.spider.demo.entity.*;
 import com.youlin.spider.demo.enums.StatusType;
 import com.youlin.spider.demo.model.BaseElement;
 import com.youlin.spider.demo.model.JobPosting;
+import com.youlin.spider.demo.model.sub.BaseSalary;
 import com.youlin.spider.demo.repository.*;
 import com.youlin.spider.demo.service.ProcessJobInfoService;
 import com.youlin.spider.demo.utils.DateUtils;
 import com.youlin.spider.demo.vo.JobInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.ListUtils;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -28,6 +30,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.text.DecimalFormat;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
@@ -50,6 +53,9 @@ public class ProcessJobInfoServiceImpl implements ProcessJobInfoService {
 	private final FilterRepository filterRepository;
 	private final UserRepository userRepository;
 	private final ObjectMapper objectMapper;
+	static DecimalFormat decimalFormat = new DecimalFormat("###,###,###");
+
+	static String JOB_MODE = "job-mode__";
 
 	@Override
 	@Transactional(isolation = Isolation.READ_COMMITTED)
@@ -172,111 +178,119 @@ public class ProcessJobInfoServiceImpl implements ProcessJobInfoService {
 
 		List<WebElement> jobList = driver.findElements(By.className("js-job-item"));
 
-		String JOB_MODE = "job-mode__";
 		List<Company> companyList = companyRepository.findAll();
 		List<Area> areaList = areaRepository.findAll();
 
 		Map<String, Integer> excludeCount = new HashMap<>();
 
-		ChromeDriver headlessDriver = new ChromeDriver(new ChromeOptions().addArguments("--no-sandbox", "--headless"));
+		List<List<WebElement>> partition = ListUtils.partition(jobList, jobList.size() / 5);
+
+		List<Future<Void>> futures = new ArrayList<>();
 		ExecutorService executorService = Executors.newFixedThreadPool(5);
-		try {
-			List<Future<JobInfo>> futures = new ArrayList<>();
-			for (WebElement webElement : jobList) {
-				Callable<JobInfo> runnable = () -> {
-					long startTime = System.currentTimeMillis();
-					String href = webElement.findElement(By.className("js-job-link")).getAttribute("href");
-					WebElement jobMode = webElement.findElement(By.cssSelector("ul"));
-					String jobName = webElement.getAttribute("data-job-name");
-					String jobCompanyName = webElement.getAttribute("data-cust-name");
-					String jobArea = jobMode.findElement(By.className(JOB_MODE + "area")).getText();
-					String companyUrl = jobMode.findElement(By.className(JOB_MODE + "company")).findElement(By.tagName("a")).getAttribute("href");
-					log.trace("get page cost: {}", System.currentTimeMillis() - startTime);
-					if (jobPatten.matcher(jobName).find()) {
-						log.debug("exclude jobName: {}", jobName);
-						excludeCount.merge("jobName", 1, Integer::sum);
-						return null;
-					}
-
-					if (companyPatten.matcher(jobCompanyName).find()) {
-						log.debug("exclude jobCompanyName: {}", jobCompanyName);
-						excludeCount.merge("jobCompanyName", 1, Integer::sum);
-						return null;
-					}
-
-					if (areaPatten.matcher(jobArea).find()) {
-						log.debug("exclude jobArea: {}", jobArea);
-						excludeCount.merge("jobArea", 1, Integer::sum);
-						return null;
-					}
-
-					startTime = System.currentTimeMillis();
-					Optional<Job> jobOptional = jobRepository.findJobByJobNameAndCompany_CompanyName(jobName, jobCompanyName);
-					boolean oldJob = jobOptional.isPresent();
-					Job job;
-					if (oldJob) {
-						job = jobOptional.get();
-					} else {
-						job = new Job();
-						job.setUserId(userId);
-						job.setJobName(jobName);
-						job.setJobUrl(href);
-						job.setStatus(StatusType.ACTIVATED);
-
-						Optional<Area> areaOptional = areaList.stream().filter(area -> area.getAreaName().equals(jobArea)).findFirst();
-						if (areaOptional.isPresent()) {
-							job.setArea(areaOptional.get());
-						} else {
-							Area area = new Area();
-							area.setAreaName(jobArea);
-							area.setStatus(StatusType.ACTIVATED);
-							area = areaRepository.saveAndFlush(area);
-							job.setArea(area);
-							areaList.add(area);
-						}
-
-						Optional<Company> first = companyList.stream().filter(company -> company.getCompanyName().equals(jobCompanyName)).findFirst();
-						if (first.isPresent()) {
-							Company company = first.get();
-							job.setCompany(company);
-							if (!StringUtils.hasLength(company.getCompanyUrl())) {
-								company.setCompanyUrl(companyUrl);
-								companyRepository.save(company);
-							}
-						} else {
-							Company company = new Company();
-							company.setCompanyName(jobCompanyName);
-							company.setStatus(StatusType.ACTIVATED);
-							company = companyRepository.save(company);
-							job.setCompany(company);
-							companyList.add(company);
-						}
-					}
-
-					log.info("get job: {}, company: {}, cost: {}", jobName, jobCompanyName, System.currentTimeMillis() - startTime);
-
-					JobInfo jobInfo = new JobInfo();
-					jobInfo.setJobName(jobName);
-					jobInfo.setJobCompany(jobCompanyName);
-					jobInfo.setJobArea(jobArea);
-					jobInfo.setJobUrl(href);
-					return this.getJobInfo(job, jobInfo, headlessDriver, oldJob);
-				};
-				futures.add(executorService.submit(runnable));
-			}
-			for (Future<JobInfo> future : futures) {
-				JobInfo jobInfo = future.get();
-				jobInfos.add(jobInfo);
-			}
-		} catch (ExecutionException | InterruptedException e) {
-			throw new RuntimeException(e);
-		} finally {
-			headlessDriver.quit();
+		for (List<WebElement> webElements : partition) {
+			Callable<Void> runnable = () -> {
+				this.getJobInfoList(userId, webElements, jobPatten, excludeCount, companyPatten, areaPatten, jobInfos, companyList, areaList);
+				return null;
+			};
+			futures.add(executorService.submit(runnable));
 		}
+
+		for (Future<Void> future : futures) {
+			try {
+				future.get();
+			} catch (InterruptedException | ExecutionException e) {
+				throw new RuntimeException(e);
+			}
+		}
+
 		log.info("共有 {} 筆資料", jobList.size());
 		log.info("有效筆數 :{}", jobInfos.size());
 		log.info("排除 jobs: {}", excludeCount);
 		return jobInfos;
+	}
+
+	public void getJobInfoList(Integer userId, List<WebElement> jobList, Pattern jobPatten, Map<String, Integer> excludeCount
+		, Pattern companyPatten, Pattern areaPatten, List<JobInfo> jobInfos, List<Company> companyList, List<Area> areaList) {
+		ChromeDriver headlessDriver = new ChromeDriver(new ChromeOptions().addArguments("--no-sandbox", "--headless"));
+		for (WebElement webElement : jobList) {
+			long startTime = System.currentTimeMillis();
+			String href = webElement.findElement(By.className("js-job-link")).getAttribute("href");
+			WebElement jobMode = webElement.findElement(By.cssSelector("ul"));
+			String jobName = webElement.getAttribute("data-job-name");
+			String jobCompanyName = webElement.getAttribute("data-cust-name");
+			String jobArea = jobMode.findElement(By.className(JOB_MODE + "area")).getText();
+			String companyUrl = jobMode.findElement(By.className(JOB_MODE + "company")).findElement(By.tagName("a")).getAttribute("href");
+			log.trace("get page cost: {}", System.currentTimeMillis() - startTime);
+			if (jobPatten.matcher(jobName).find()) {
+				log.debug("exclude jobName: {}", jobName);
+				excludeCount.merge("jobName", 1, Integer::sum);
+				continue;
+			}
+
+			if (companyPatten.matcher(jobCompanyName).find()) {
+				log.debug("exclude jobCompanyName: {}", jobCompanyName);
+				excludeCount.merge("jobCompanyName", 1, Integer::sum);
+				continue;
+			}
+
+			if (areaPatten.matcher(jobArea).find()) {
+				log.debug("exclude jobArea: {}", jobArea);
+				excludeCount.merge("jobArea", 1, Integer::sum);
+				continue;
+			}
+
+			startTime = System.currentTimeMillis();
+			Optional<Job> jobOptional = jobRepository.findJobByJobNameAndCompany_CompanyName(jobName, jobCompanyName);
+			boolean oldJob = jobOptional.isPresent();
+			Job job;
+			if (oldJob) {
+				job = jobOptional.get();
+			} else {
+				job = new Job();
+				job.setUserId(userId);
+				job.setJobName(jobName);
+				job.setJobUrl(href);
+				job.setStatus(StatusType.ACTIVATED);
+
+				Optional<Area> areaOptional = areaList.stream().filter(area -> area.getAreaName().equals(jobArea)).findFirst();
+				if (areaOptional.isPresent()) {
+					job.setArea(areaOptional.get());
+				} else {
+					Area area = new Area();
+					area.setAreaName(jobArea);
+					area.setStatus(StatusType.ACTIVATED);
+					area = areaRepository.saveAndFlush(area);
+					job.setArea(area);
+					areaList.add(area);
+				}
+
+				Optional<Company> first = companyList.stream().filter(company -> company.getCompanyName().equals(jobCompanyName)).findFirst();
+				if (first.isPresent()) {
+					Company company = first.get();
+					job.setCompany(company);
+					if (!StringUtils.hasLength(company.getCompanyUrl())) {
+						company.setCompanyUrl(companyUrl);
+						companyRepository.save(company);
+					}
+				} else {
+					Company company = new Company();
+					company.setCompanyName(jobCompanyName);
+					company.setStatus(StatusType.ACTIVATED);
+					company = companyRepository.save(company);
+					job.setCompany(company);
+					companyList.add(company);
+				}
+			}
+
+			log.info("get job: {}, company: {}, cost: {}", jobName, jobCompanyName, System.currentTimeMillis() - startTime);
+
+			JobInfo jobInfo = new JobInfo();
+			jobInfo.setJobName(jobName);
+			jobInfo.setJobCompany(jobCompanyName);
+			jobInfo.setJobArea(jobArea);
+			jobInfo.setJobUrl(href);
+			jobInfos.add(this.getJobInfo(job, jobInfo, headlessDriver, oldJob));
+		}
 	}
 
 	@Override
@@ -291,7 +305,7 @@ public class ProcessJobInfoServiceImpl implements ProcessJobInfoService {
 				log.error("", se);
 			}
 		}
-		WebDriverWait wait = new WebDriverWait(headlessDriver, Duration.ofSeconds(5));
+		WebDriverWait wait = new WebDriverWait(headlessDriver, Duration.ofSeconds(50));
 		wait.withMessage("timeout to loading page: " + url).until((ExpectedCondition<Boolean>) driver -> {
 			assert driver != null;
 			return ((JavascriptExecutor) driver).executeScript("return document.readyState").equals("complete");
@@ -316,9 +330,14 @@ public class ProcessJobInfoServiceImpl implements ProcessJobInfoService {
 				for (BaseElement baseElement : result) {
 					if (baseElement instanceof JobPosting jobPosting) {
 						jobContent = jobPosting.getDescription();
-						jobSalary = jobPosting.getBaseSalary().getValue().getValue();
+						BaseSalary baseSalary = jobPosting.getBaseSalary();
+						jobSalary = baseSalary.getValue().getValue();
 						if (jobSalary == null || "40000元以上".equals(jobSalary)) {
 							jobSalary = "面議";
+						}
+						if (baseSalary.getValue().getMinValue() != null && baseSalary.getValue().getMaxValue() != null) {
+							jobSalary = String.format("月薪 %s ~ %s 元", decimalFormat.format(baseSalary.getValue().getMinValue()),
+								decimalFormat.format(baseSalary.getValue().getMaxValue()));
 						}
 						jobUpdateDateStr = jobPosting.getDatePosted();
 					}
@@ -350,7 +369,7 @@ public class ProcessJobInfoServiceImpl implements ProcessJobInfoService {
 			}
 		}
 		job.setJobLocation(jobLocation);
-		log.debug("url: {}, location: {}", url, jobLocation);
+		log.trace("url: {}, location: {}", url, jobLocation);
 		job.setJobSalary(jobSalary);
 
 		if (oldJob) {
@@ -384,6 +403,7 @@ public class ProcessJobInfoServiceImpl implements ProcessJobInfoService {
 		log.trace("return job cost: {}", System.currentTimeMillis() - startTime);
 
 		return jobInfo;
+
 	}
 
 }
