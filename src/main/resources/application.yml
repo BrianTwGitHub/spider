@@ -1,5 +1,7 @@
 server:
   port: 8080
+  servlet:
+    context-path: /
 
 spring:
   application:
@@ -8,13 +10,14 @@ spring:
     basename: i18n/messages
     encoding: UTF-8
   jpa:
-    show-sql: true
+    show-sql: false
     open-in-view: false
     hibernate:
       ddl-auto: none
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQL5Dialect
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        globally_quoted_identifiers: true
         order_inserts: true
         jdbc:
           batch_size: 10000
@@ -23,7 +26,7 @@ spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/demo
-    username: admin
+    username: root
     password: P@ssw0rd
     hikari:
       auto-commit: true
@@ -35,6 +38,8 @@ spring:
       maximum-pool-size: 300
   schedule:
     enabled: true
+  mvc:
+    dispatch-options-request: true
 
 demo:
   exclude:
@@ -63,3 +68,11 @@ logging:
       youlin:
         spider:
           demo: debug
+
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v3/api-docs
+  swagger-ui:
+    path: /doc
+    enabled: true
