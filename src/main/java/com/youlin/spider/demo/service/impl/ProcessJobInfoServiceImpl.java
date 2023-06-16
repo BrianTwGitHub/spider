@@ -335,6 +335,7 @@ public class ProcessJobInfoServiceImpl implements ProcessJobInfoService {
 						if (jobSalary == null || "40000元以上".equals(jobSalary)) {
 							jobSalary = "面議";
 						}
+						log.debug("salary: {}", baseSalary.getValue());
 						if (baseSalary.getValue().getMinValue() != null && baseSalary.getValue().getMaxValue() != null) {
 							jobSalary = String.format("月薪 %s ~ %s 元", decimalFormat.format(baseSalary.getValue().getMinValue()),
 								decimalFormat.format(baseSalary.getValue().getMaxValue()));
@@ -353,13 +354,16 @@ public class ProcessJobInfoServiceImpl implements ProcessJobInfoService {
 			}
 		}
 		startTime = System.currentTimeMillis();
+		if (jobSalary.startsWith("時薪")) {
+			job.setStatus(StatusType.DELETED);
+		}
 		if (jobSalary.startsWith("月薪") || jobSalary.startsWith("年薪")) {
 			boolean isMonthlySalary = jobSalary.startsWith("月薪");
 			String[] matchString = jobSalary.replaceAll("(,|月薪|年薪|元|以上)", "").split("~");
 			int minSalary = isMonthlySalary ? monthlyMinimumWage : yearlyMinimumWage;
 			boolean enoughSalary = false;
 			for (String salary : matchString) {
-				if (Integer.parseInt(salary) > minSalary) {
+				if (Integer.parseInt(salary.trim()) > minSalary) {
 					enoughSalary = true;
 					break;
 				}

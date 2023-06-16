@@ -1,7 +1,11 @@
 package com.youlin.spider.demo.service.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.youlin.spider.demo.entity.*;
 import com.youlin.spider.demo.enums.StatusType;
+import com.youlin.spider.demo.model.BaseElement;
+import com.youlin.spider.demo.model.BreadcrumbList;
+import com.youlin.spider.demo.model.sub.ListItem;
 import com.youlin.spider.demo.repository.AreaRepository;
 import com.youlin.spider.demo.repository.CompanyRepository;
 import com.youlin.spider.demo.repository.JobDao;
@@ -13,6 +17,7 @@ import com.youlin.spider.demo.vo.JobInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.By;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.springframework.data.domain.Page;
@@ -21,10 +26,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -41,6 +43,8 @@ public class JobServiceImpl implements JobService {
 	private final CompanyRepository companyRepository;
 
 	private final ProcessJobInfoService processJobInfoService;
+
+	private final ObjectMapper objectMapper;
 
 	@Override
 	public Page<JobInfo> getJobs(Integer userId, String jobName, List<Integer> jobAreaIds, String companyName, String jobContent, Boolean isRead, Boolean isFavorite,
@@ -188,14 +192,33 @@ public class JobServiceImpl implements JobService {
 				for (Company company : companies) {
 					Job job = company.getJobs().get(0);
 					if (StatusType.DELETED != job.getStatus()) {
-						String jobUrl = company.getJobs().get(0).getJobUrl();
+						String jobUrl = job.getJobUrl();
 						chromeDriver.get(jobUrl);
 						try {
-							String companyUrl = chromeDriver.findElement(By.className("job-header__title")).findElement(By.tagName("a")).getAttribute("href");
-							company.setCompanyUrl(companyUrl);
-							companyRepository.save(company);
+							Optional<WebElement> first =
+								chromeDriver.findElements(By.tagName("script")).stream().peek(el -> el.getAttribute("type"))
+									.filter(webElement -> webElement.getAttribute("type").equals("application/ld+json")).findFirst();
+							if (first.isPresent()) {
+								String json = first.get().getAttribute("innerHTML");
+
+								List<BaseElement> result = objectMapper.readValue(json, objectMapper.getTypeFactory().constructCollectionType(List.class, BaseElement.class));
+								String companyUrl = null;
+								for (BaseElement baseElement : result) {
+									if (baseElement instanceof BreadcrumbList breadcrumbList) {
+										Optional<ListItem> companyOptional =
+											breadcrumbList.getItemListElement().stream().filter(listItem -> listItem.getPosition() == 2).findFirst();
+										if (companyOptional.isPresent()) {
+											companyUrl = companyOptional.get().getItem();
+											log.debug("{}", companyUrl);
+											break;
+										}
+									}
+								}
+								company.setCompanyUrl(companyUrl);
+								companyRepository.save(company);
+							}
 						} catch (Exception e) {
-							log.error("can't find company url: {}", company.getCompanyName(), e);
+							log.error("can't find company url: {}, company name: {}", jobUrl, company.getCompanyName(), e);
 						}
 					}
 				}
