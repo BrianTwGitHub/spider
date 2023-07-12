@@ -25,64 +25,67 @@ import java.util.List;
 @Slf4j
 public class JobDaoImpl implements JobDao {
 
-    private final JobRepository jobRepository;
+	private final JobRepository jobRepository;
 
-    @Override
-    public Page<Job> findJobByCondition(Integer userId, String jobName, List<Integer> jobAreaIds, String companyName, String jobContent, StatusType statusType, Boolean isRead, Boolean isFavorite, Pageable pageable) {
-        QJob qJob = QJob.job;
+	@Override
+	public Page<Job> findJobByCondition(Integer userId, String jobName, List<Integer> jobAreaIds, String companyName, String jobContent, StatusType statusType, Boolean isRead,
+		Boolean isFavorite, Pageable pageable) {
+		QJob qJob = QJob.job;
 
-        BooleanExpression conditions = Expressions.asBoolean(true).isTrue();
+		BooleanExpression conditions = Expressions.asBoolean(true).isTrue();
 
-        if (userId != null) {
-            conditions = conditions.and(qJob.userId.eq(userId));
-        }
+		if (userId != null) {
+			conditions = conditions.and(qJob.userId.eq(userId));
+		}
 
-        if (StringUtils.hasLength(jobName)) {
-            conditions = conditions.and(qJob.jobName.containsIgnoreCase(jobName));
-        }
+		if (StringUtils.hasLength(jobName)) {
+			conditions = conditions.and(qJob.jobName.containsIgnoreCase(jobName));
+		}
 
-        if (!CollectionUtils.isEmpty(jobAreaIds)) {
-            conditions = conditions.and(qJob.area.id.in(jobAreaIds));
-        }
+		if (!CollectionUtils.isEmpty(jobAreaIds)) {
+			conditions = conditions.and(qJob.area.id.in(jobAreaIds));
+		}
 
-        if (StringUtils.hasLength(companyName)) {
-            conditions = conditions.and(qJob.company.companyName.containsIgnoreCase(companyName));
-        }
+		if (StringUtils.hasLength(companyName)) {
+			conditions = conditions.and(qJob.company.companyName.containsIgnoreCase(companyName));
+		}
 
-        if (StringUtils.hasLength(jobContent)) {
-            conditions = conditions.and(qJob.jobContent.containsIgnoreCase(jobContent));
-        }
+		conditions = conditions.and(qJob.company.status.eq(StatusType.ACTIVATED));
 
-        if (statusType != null) {
-            conditions = conditions.and(qJob.status.eq(statusType));
-        }
+		if (StringUtils.hasLength(jobContent)) {
+			conditions = conditions.and(qJob.jobContent.containsIgnoreCase(jobContent));
+		}
 
-        conditions = conditions.and(qJob.status.ne(StatusType.DELETED));
+		if (statusType != null) {
+			conditions = conditions.and(qJob.status.eq(statusType));
+		}
 
-        if (isRead != null) {
-            conditions = conditions.and(qJob.isRead.eq(isRead));
-        }
+		conditions = conditions.and(qJob.status.ne(StatusType.DELETED));
 
-        if (isFavorite != null) {
-            conditions = conditions.and(qJob.isFavorite.eq(isFavorite));
-        }
-        Sort sort = pageable.getSort();
-        List<Sort.Order> newOrders = new ArrayList<>();
+		if (isRead != null) {
+			conditions = conditions.and(qJob.isRead.eq(isRead));
+		}
 
-        for (Sort.Order order : sort) {
-            String propertyName = order.getProperty();
-            Sort.Direction direction = order.isDescending() ? Sort.Direction.DESC : Sort.Direction.ASC;
-            if (order.getProperty().equalsIgnoreCase("jobArea")) {
-                propertyName = "area.id";
-            } else if (order.getProperty().equalsIgnoreCase("jobCompany")) {
-                propertyName = "company.id";
-            }
-            newOrders.add(Sort.Order.by(propertyName).with(direction));
-        }
+		if (isFavorite != null) {
+			conditions = conditions.and(qJob.isFavorite.eq(isFavorite));
+		}
+		Sort sort = pageable.getSort();
+		List<Sort.Order> newOrders = new ArrayList<>();
 
-        newOrders.add(Sort.Order.desc("jobUpdateDate"));
+		for (Sort.Order order : sort) {
+			String propertyName = order.getProperty();
+			Sort.Direction direction = order.isDescending() ? Sort.Direction.DESC : Sort.Direction.ASC;
+			if (order.getProperty().equalsIgnoreCase("jobArea")) {
+				propertyName = "area.id";
+			} else if (order.getProperty().equalsIgnoreCase("jobCompany")) {
+				propertyName = "company.id";
+			}
+			newOrders.add(Sort.Order.by(propertyName).with(direction));
+		}
 
-        return jobRepository.findAll(conditions, PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(newOrders)));
-    }
+		newOrders.add(Sort.Order.desc("jobUpdateDate"));
+
+		return jobRepository.findAll(conditions, PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(newOrders)));
+	}
 
 }
